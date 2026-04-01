@@ -21,6 +21,12 @@ import InvestmentCard from '@/components/dashboard/InvestmentCard';
 import QuickValueDialog from '@/components/dashboard/QuickValueDialog';
 import CategoryGroupDialog from '@/components/dashboard/CategoryGroupDialog';
 
+const EMOJI_MAP: Record<string, string> = {
+  zap: '⚡', activity: '❤️‍🩹', heart: '❤️', dumbbell: '🏋️',
+  'shopping-bag': '🛍️', receipt: '🧾', fuel: '⛽', church: '⛪',
+  briefcase: '💼',
+};
+
 const now = new Date();
 
 export default function Dashboard() {
@@ -227,10 +233,10 @@ export default function Dashboard() {
                 onClick={() => setDialogAtalho(atalho)}
               >
                 <div
-                  className="h-8 w-8 rounded-md flex items-center justify-center shrink-0 text-base"
+                  className="h-8 w-8 rounded-md flex items-center justify-center shrink-0 text-base text-white"
                   style={{ backgroundColor: atalho.cor || '#3B82F6' }}
                 >
-                  {atalho.icone || '⚡'}
+                  {EMOJI_MAP[atalho.icone || ''] || atalho.icone || '⚡'}
                 </div>
                 <span className="truncate text-left">
                   <span className="block truncate">{atalho.nome}</span>
