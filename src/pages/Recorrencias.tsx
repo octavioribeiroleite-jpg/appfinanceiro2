@@ -200,33 +200,48 @@ export default function Recorrencias() {
       ) : modelos.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">Nenhum modelo recorrente</p>
       ) : (
-        <div className="space-y-2">
-          {modelos.map((m: any) => (
-            <Card key={m.id} className={!m.ativo ? 'opacity-50' : ''}>
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm truncate">{m.descricao}</span>
-                      <Badge variant="outline" className="text-[10px] shrink-0">{modoLabels[m.modo_valor]}</Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {m.pessoas?.nome} • {m.categorias?.nome} • {formatCurrency(Number(m.valor_padrao))} • Dia {m.dia_referencia}
-                    </div>
+        <div className="space-y-6">
+          {pessoas.map(pessoa => {
+            const pessoaModelos = modelos.filter((m: any) => m.pessoa_id === pessoa.id);
+            if (pessoaModelos.length === 0) return null;
+            return (
+              <div key={pessoa.id} className="space-y-2">
+                <div className="flex items-center gap-2 pb-1 border-b">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(m)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(m.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Switch checked={m.ativo} onCheckedChange={() => toggleAtivo(m.id, m.ativo)} />
-                  </div>
+                  <span className="font-semibold text-sm">{pessoa.nome}</span>
+                  <span className="text-xs text-muted-foreground">({pessoaModelos.length})</span>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                {pessoaModelos.map((m: any) => (
+                  <Card key={m.id} className={!m.ativo ? 'opacity-50' : ''}>
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm truncate">{m.descricao}</span>
+                            <Badge variant="outline" className="text-[10px] shrink-0">{modoLabels[m.modo_valor]}</Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {m.categorias?.nome} • {formatCurrency(Number(m.valor_padrao))} • Dia {m.dia_referencia}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(m)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(m.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Switch checked={m.ativo} onCheckedChange={() => toggleAtivo(m.id, m.ativo)} />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
 
