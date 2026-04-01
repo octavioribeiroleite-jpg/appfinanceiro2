@@ -1,0 +1,1 @@
+ALTER TABLE public.atalhos_rapidos ADD COLUMN descricao text DEFAULT '';
