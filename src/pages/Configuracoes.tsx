@@ -175,7 +175,7 @@ export default function Configuracoes() {
         {/* ATALHOS TAB */}
         <TabsContent value="atalhos" className="space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">{editAtalhoId ? 'Editar Atalho' : 'Novo Atalho Rápido'}</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Novo Atalho Rápido</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label>Nome</Label>
