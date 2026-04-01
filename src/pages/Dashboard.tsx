@@ -251,7 +251,8 @@ export default function Dashboard() {
               })}
             </div>
           </div>
-        ));
+          );
+        });
       })()}
 
       {/* Cards do mês + Investimento */}
