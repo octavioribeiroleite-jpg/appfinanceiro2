@@ -139,88 +139,60 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
         </Card>
       )}
 
-      {/* Por categoria */}
+      {/* Caixinhas por categoria */}
       {cats.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Detalhamento por Categoria</CardTitle></CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Categoria</TableHead>
-                    <TableHead className="text-xs text-right">Bruto</TableHead>
-                    <TableHead className="text-xs text-right">Dízimo</TableHead>
-                    <TableHead className="text-xs text-right">Imposto</TableHead>
-                    <TableHead className="text-xs text-right">Gasolina</TableHead>
-                    <TableHead className="text-xs text-right">Líquido</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cats.map(c => (
-                    <TableRow key={c.nome}>
-                      <TableCell className="text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: c.cor }} />
-                          {c.nome}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground">Fontes de Renda</h3>
+          {cats.map(c => (
+            <Collapsible key={c.nome}>
+              <Card>
+                <CollapsibleTrigger className="w-full text-left">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: c.cor }} />
+                        <span className="text-sm font-semibold">{c.nome}</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Bruto</span>
+                      <span className="text-sm font-bold">{formatCurrency(c.bruto)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Líquido</span>
+                      <span className="text-sm font-bold text-emerald-600">{formatCurrency(c.liquido)}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                      {c.dizimo > 0 && <span>Dízimo: <span className="text-red-500 font-medium">{formatCurrency(c.dizimo)}</span></span>}
+                      {c.imposto > 0 && <span>Imposto: <span className="text-rose-600 font-medium">{formatCurrency(c.imposto)}</span></span>}
+                      {c.gasolina > 0 && <span>Gasolina: <span className="text-amber-500 font-medium">{formatCurrency(c.gasolina)}</span></span>}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      {c.total} lançamentos · <span className="text-emerald-600 font-medium">{c.recebidos} recebidos</span>
+                    </p>
+                  </CardContent>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="border-t px-4 pb-3 pt-2 space-y-1.5">
+                    {c.lancamentos.sort((a: any, b: any) => (a.descricao || '').localeCompare(b.descricao || '')).map((l: any) => (
+                      <div key={l.id} className="flex items-center justify-between text-xs py-1 border-b last:border-0">
+                        <span className="truncate mr-2">{l.descricao}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-medium">{formatCurrency(Number(l.valor_bruto))}</span>
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] ${l.status === 'recebido' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {l.status === 'recebido' ? '✅' : '⏳'}
+                          </span>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-right">{formatCurrency(c.bruto)}</TableCell>
-                      <TableCell className="text-xs text-right text-red-500">{formatCurrency(c.dizimo)}</TableCell>
-                      <TableCell className="text-xs text-right text-rose-600">{formatCurrency(c.imposto)}</TableCell>
-                      <TableCell className="text-xs text-right text-amber-500">{formatCurrency(c.gasolina)}</TableCell>
-                      <TableCell className="text-xs text-right font-semibold text-emerald-600">{formatCurrency(c.liquido)}</TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow className="border-t-2">
-                    <TableCell className="text-xs font-bold">Total</TableCell>
-                    <TableCell className="text-xs text-right font-bold">{formatCurrency(bruto)}</TableCell>
-                    <TableCell className="text-xs text-right font-bold text-red-500">{formatCurrency(dizimo)}</TableCell>
-                    <TableCell className="text-xs text-right font-bold text-rose-600">{formatCurrency(imposto)}</TableCell>
-                    <TableCell className="text-xs text-right font-bold text-amber-500">{formatCurrency(gasolina)}</TableCell>
-                    <TableCell className="text-xs text-right font-bold text-emerald-600">{formatCurrency(liquido)}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          ))}
+        </div>
       )}
-
-      {/* Lançamentos detalhados */}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Lançamentos Detalhados</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">Descrição</TableHead>
-                  <TableHead className="text-xs">Categoria</TableHead>
-                  <TableHead className="text-xs text-right">Bruto</TableHead>
-                  <TableHead className="text-xs text-right">Líquido</TableHead>
-                  <TableHead className="text-xs text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lancamentosReceita.map(l => (
-                  <TableRow key={l.id}>
-                    <TableCell className="text-xs">{l.descricao}</TableCell>
-                    <TableCell className="text-xs">{l.categorias?.nome}</TableCell>
-                    <TableCell className="text-xs text-right">{formatCurrency(Number(l.valor_bruto))}</TableCell>
-                    <TableCell className="text-xs text-right text-emerald-600">{formatCurrency(Number(l.valor_liquido))}</TableCell>
-                    <TableCell className="text-xs text-center">
-                      <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] ${l.status === 'recebido' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {l.status === 'recebido' ? 'Recebido' : 'Pendente'}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
