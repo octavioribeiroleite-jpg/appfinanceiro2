@@ -21,6 +21,12 @@ import InvestmentCard from '@/components/dashboard/InvestmentCard';
 import QuickValueDialog from '@/components/dashboard/QuickValueDialog';
 import CategoryGroupDialog from '@/components/dashboard/CategoryGroupDialog';
 
+const EMOJI_MAP: Record<string, string> = {
+  zap: '⚡', activity: '❤️‍🩹', heart: '❤️', dumbbell: '🏋️',
+  'shopping-bag': '🛍️', receipt: '🧾', fuel: '⛽', church: '⛪',
+  briefcase: '💼',
+};
+
 const now = new Date();
 
 export default function Dashboard() {
