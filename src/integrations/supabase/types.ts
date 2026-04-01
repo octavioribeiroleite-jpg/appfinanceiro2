@@ -20,6 +20,7 @@ export type Database = {
           categoria_id: string
           cor: string | null
           created_at: string
+          descricao: string | null
           icone: string | null
           id: string
           nome: string
@@ -33,6 +34,7 @@ export type Database = {
           categoria_id: string
           cor?: string | null
           created_at?: string
+          descricao?: string | null
           icone?: string | null
           id?: string
           nome: string
@@ -46,6 +48,7 @@ export type Database = {
           categoria_id?: string
           cor?: string | null
           created_at?: string
+          descricao?: string | null
           icone?: string | null
           id?: string
           nome?: string
