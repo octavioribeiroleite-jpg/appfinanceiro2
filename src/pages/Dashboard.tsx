@@ -207,7 +207,9 @@ export default function Dashboard() {
             </Link>
           );
         }
-        return entries.map(([catNome, items]) => (
+        return entries.map(([catNome, items]) => {
+          const totalGrupo = items.reduce((s, a) => s + Number(a.valor_padrao), 0);
+          return (
           <div key={catNome} className="space-y-2">
             <div className="flex items-center gap-2">
               <div
@@ -215,6 +217,10 @@ export default function Dashboard() {
                 style={{ backgroundColor: items[0]?.categorias?.cor || '#888' }}
               />
               <h3 className="text-sm font-semibold">{catNome}</h3>
+              <span className="text-xs text-muted-foreground">({items.length})</span>
+              {totalGrupo > 0 && (
+                <span className="text-xs font-semibold ml-auto">{formatCurrency(totalGrupo)}</span>
+              )}
             </div>
             <div className="grid grid-cols-3 gap-2">
               {items.map(atalho => {
