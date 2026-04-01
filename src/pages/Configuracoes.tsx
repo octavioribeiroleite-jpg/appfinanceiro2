@@ -131,14 +131,16 @@ export default function Configuracoes() {
   };
 
   const ICONES = [
-    { value: 'zap', label: '⚡ Zap' },
-    { value: 'activity', label: '📊 Activity' },
-    { value: 'heart', label: '❤️ Heart' },
-    { value: 'dumbbell', label: '💪 Dumbbell' },
-    { value: 'shopping-bag', label: '🛍️ Shopping' },
-    { value: 'receipt', label: '🧾 Receipt' },
-    { value: 'fuel', label: '⛽ Fuel' },
-    { value: 'church', label: '⛪ Church' },
+    { value: 'zap', label: '⚡ Geral' },
+    { value: 'activity', label: '💉 Radial' },
+    { value: 'heart', label: '❤️ Eletro' },
+    { value: 'dumbbell', label: '💪 Personal' },
+    { value: 'shopping-bag', label: '📊 Vendas' },
+    { value: 'receipt', label: '💼 Consultoria' },
+    { value: 'fuel', label: '🚗 Gasolina' },
+    { value: 'church', label: '⛪ Igreja' },
+    { value: 'briefcase', label: '💰 Dinheiro' },
+    { value: 'star', label: '⭐ Outros' },
   ];
 
   return (
