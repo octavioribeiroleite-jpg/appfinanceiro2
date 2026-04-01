@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,6 +43,8 @@ export default function Configuracoes() {
   const [novaCategoria, setNovaCategoria] = useState({ nome: '', tipo: 'despesa', cor: '#6b7280', icone: 'circle' });
   const [novoAtalho, setNovoAtalho] = useState({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
   const [editAtalhoId, setEditAtalhoId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
 
   const handleAddPessoa = async () => {
     if (!user || !novaPessoa.nome) return;
@@ -78,26 +81,20 @@ export default function Configuracoes() {
       ordem: atalhos.length,
     };
 
-    let error;
-    if (editAtalhoId) {
-      ({ error } = await supabase.from('atalhos_rapidos').update(payload).eq('id', editAtalhoId));
-    } else {
-      ({ error } = await supabase.from('atalhos_rapidos').insert(payload));
-    }
+    const { error } = await supabase.from('atalhos_rapidos').insert(payload);
 
     if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     else {
       queryClient.invalidateQueries({ queryKey: ['atalhos'] });
       queryClient.invalidateQueries({ queryKey: ['atalhos-all'] });
       setNovoAtalho({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
-      setEditAtalhoId(null);
-      toast({ title: editAtalhoId ? 'Atalho atualizado!' : 'Atalho adicionado!' });
+      toast({ title: 'Atalho adicionado!' });
     }
   };
 
   const startEditAtalho = (a: typeof atalhos[0]) => {
     setEditAtalhoId(a.id);
-    setNovoAtalho({
+    setEditForm({
       nome: a.nome,
       categoria_id: a.categoria_id,
       pessoa_id: a.pessoa_id || '',
@@ -105,6 +102,27 @@ export default function Configuracoes() {
       cor: a.cor || '#3B82F6',
       icone: a.icone || 'zap',
     });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!user || !editAtalhoId || !editForm.nome || !editForm.categoria_id) return;
+    const { error } = await supabase.from('atalhos_rapidos').update({
+      nome: editForm.nome,
+      categoria_id: editForm.categoria_id,
+      pessoa_id: editForm.pessoa_id || null,
+      valor_padrao: editForm.valor_padrao,
+      cor: editForm.cor,
+      icone: editForm.icone,
+    }).eq('id', editAtalhoId);
+    if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    else {
+      queryClient.invalidateQueries({ queryKey: ['atalhos'] });
+      queryClient.invalidateQueries({ queryKey: ['atalhos-all'] });
+      setEditDialogOpen(false);
+      setEditAtalhoId(null);
+      toast({ title: 'Atalho atualizado!' });
+    }
   };
 
   const deleteAtalho = async (id: string) => {
@@ -157,7 +175,7 @@ export default function Configuracoes() {
         {/* ATALHOS TAB */}
         <TabsContent value="atalhos" className="space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">{editAtalhoId ? 'Editar Atalho' : 'Novo Atalho Rápido'}</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Novo Atalho Rápido</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label>Nome</Label>
@@ -229,19 +247,7 @@ export default function Configuracoes() {
                   </Select>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={handleSaveAtalho} className="flex-1">
-                  {editAtalhoId ? 'Salvar' : 'Adicionar'}
-                </Button>
-                {editAtalhoId && (
-                  <Button variant="outline" onClick={() => {
-                    setEditAtalhoId(null);
-                    setNovoAtalho({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
-                  }}>
-                    Cancelar
-                  </Button>
-                )}
-              </div>
+              <Button onClick={handleSaveAtalho} className="w-full">Adicionar</Button>
             </CardContent>
           </Card>
 
@@ -384,6 +390,85 @@ export default function Configuracoes() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de edição */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Editar Atalho</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input
+                value={editForm.nome}
+                onChange={e => setEditForm(f => ({ ...f, nome: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Valor Padrão (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={editForm.valor_padrao || ''}
+                onChange={e => setEditForm(f => ({ ...f, valor_padrao: parseFloat(e.target.value) || 0 }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Categoria (setor)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {categoriasReceita.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setEditForm(f => ({ ...f, categoria_id: c.id }))}
+                    className={`flex items-center gap-2 rounded-lg border-2 p-2.5 text-sm font-medium transition-all ${
+                      editForm.categoria_id === c.id
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary'
+                        : 'border-border hover:border-muted-foreground'
+                    }`}
+                  >
+                    <div className="h-5 w-5 rounded-full shrink-0" style={{ backgroundColor: c.cor || '#888' }} />
+                    <span className="truncate">{c.nome}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Pessoa (opcional)</Label>
+              <Select value={editForm.pessoa_id} onValueChange={v => setEditForm(f => ({ ...f, pessoa_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {pessoas.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Cor</Label>
+                <Input type="color" value={editForm.cor} onChange={e => setEditForm(f => ({ ...f, cor: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Ícone</Label>
+                <Select value={editForm.icone} onValueChange={v => setEditForm(f => ({ ...f, icone: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ICONES.map(i => (
+                      <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditSave} className="w-full">Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
