@@ -339,8 +339,14 @@ export default function Dashboard() {
         open={!!dialogAtalho}
         onOpenChange={open => !open && setDialogAtalho(null)}
         nome={dialogAtalho?.nome || ''}
+        valorPadrao={Number(dialogAtalho?.valor_padrao) || 0}
+        categoriaNome={dialogAtalho?.categorias?.nome}
+        categoriaCor={dialogAtalho?.categorias?.cor || dialogAtalho?.cor || undefined}
         onConfirm={valor => {
           if (dialogAtalho) launchEntry(dialogAtalho, valor);
+        }}
+        onEditRecorrencia={() => {
+          navigate('/configuracoes');
         }}
       />
 
