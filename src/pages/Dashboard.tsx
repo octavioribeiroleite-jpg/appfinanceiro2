@@ -119,7 +119,7 @@ export default function Dashboard() {
     const hoje = new Date();
     const payload = {
       user_id: user.id,
-      pessoa_id: atalho.pessoa_id || '',
+      pessoa_id: atalho.pessoa_id || atalho.categoria_id,
       categoria_id: atalho.categoria_id,
       descricao: atalho.nome,
       tipo_lancamento: 'receita' as const,
