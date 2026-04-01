@@ -200,7 +200,7 @@ export default function Dashboard() {
             {chartCategoria.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie data={chartCategoria} dataKey="valor" nameKey="nome" cx="50%" cy="50%" outerRadius={80} label={({ nome }) => nome}>
+                  <Pie data={chartCategoria} dataKey="valor" nameKey="nome" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
                     {chartCategoria.map((entry, i) => (
                       <Cell key={i} fill={entry.cor} />
                     ))}
