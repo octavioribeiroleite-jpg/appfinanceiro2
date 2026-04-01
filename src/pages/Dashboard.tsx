@@ -216,7 +216,7 @@ export default function Dashboard() {
               />
               <h3 className="text-sm font-semibold">{catNome}</h3>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {items.map(atalho => {
                 const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
                   return (
