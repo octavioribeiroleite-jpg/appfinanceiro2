@@ -119,8 +119,6 @@ export default function Dashboard() {
       r = regra?.[0];
     } catch {}
 
-
-    const r = regra?.[0];
     const hoje = new Date();
     const payload = {
       user_id: user.id,
