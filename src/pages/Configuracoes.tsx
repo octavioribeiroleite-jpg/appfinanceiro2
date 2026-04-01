@@ -131,14 +131,16 @@ export default function Configuracoes() {
   };
 
   const ICONES = [
-    { value: 'zap', label: '⚡ Zap' },
-    { value: 'activity', label: '📊 Activity' },
-    { value: 'heart', label: '❤️ Heart' },
-    { value: 'dumbbell', label: '💪 Dumbbell' },
-    { value: 'shopping-bag', label: '🛍️ Shopping' },
-    { value: 'receipt', label: '🧾 Receipt' },
-    { value: 'fuel', label: '⛽ Fuel' },
-    { value: 'church', label: '⛪ Church' },
+    { value: 'zap', label: '⚡ Geral' },
+    { value: 'activity', label: '💉 Radial' },
+    { value: 'heart', label: '❤️ Eletro' },
+    { value: 'dumbbell', label: '💪 Personal' },
+    { value: 'shopping-bag', label: '📊 Vendas' },
+    { value: 'receipt', label: '💼 Consultoria' },
+    { value: 'fuel', label: '🚗 Gasolina' },
+    { value: 'church', label: '⛪ Igreja' },
+    { value: 'briefcase', label: '💰 Dinheiro' },
+    { value: 'star', label: '⭐ Outros' },
   ];
 
   return (
@@ -166,15 +168,38 @@ export default function Configuracoes() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Select value={novoAtalho.categoria_id} onValueChange={v => setNovoAtalho(f => ({ ...f, categoria_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {categoriasReceita.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Valor Padrão (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0 = preencher manual"
+                  value={novoAtalho.valor_padrao || ''}
+                  onChange={e => setNovoAtalho(f => ({ ...f, valor_padrao: parseFloat(e.target.value) || 0 }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Categoria (setor)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {categoriasReceita.map(c => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setNovoAtalho(f => ({ ...f, categoria_id: c.id }))}
+                      className={`flex items-center gap-2 rounded-lg border-2 p-2.5 text-sm font-medium transition-all ${
+                        novoAtalho.categoria_id === c.id
+                          ? 'border-primary bg-primary/10 ring-1 ring-primary'
+                          : 'border-border hover:border-muted-foreground'
+                      }`}
+                    >
+                      <div
+                        className="h-5 w-5 rounded-full shrink-0"
+                        style={{ backgroundColor: c.cor || '#888' }}
+                      />
+                      <span className="truncate">{c.nome}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Pessoa (opcional)</Label>
@@ -189,31 +214,20 @@ export default function Configuracoes() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Valor Padrão (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0 = preencher manual"
-                    value={novoAtalho.valor_padrao || ''}
-                    onChange={e => setNovoAtalho(f => ({ ...f, valor_padrao: parseFloat(e.target.value) || 0 }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cor</Label>
+                  <Label>Cor do botão</Label>
                   <Input type="color" value={novoAtalho.cor} onChange={e => setNovoAtalho(f => ({ ...f, cor: e.target.value }))} />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Ícone</Label>
-                <Select value={novoAtalho.icone} onValueChange={v => setNovoAtalho(f => ({ ...f, icone: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {ICONES.map(i => (
-                      <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label>Ícone</Label>
+                  <Select value={novoAtalho.icone} onValueChange={v => setNovoAtalho(f => ({ ...f, icone: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {ICONES.map(i => (
+                        <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveAtalho} className="flex-1">
@@ -231,37 +245,60 @@ export default function Configuracoes() {
             </CardContent>
           </Card>
 
-          <div className="space-y-2">
-            {atalhos.map(a => (
-              <Card key={a.id}>
-                <CardContent className="p-3 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div className="h-8 w-8 rounded-md shrink-0 flex items-center justify-center" style={{ backgroundColor: a.cor || '#3B82F6' }}>
-                      <span className="text-white text-xs">⚡</span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{a.nome}</p>
-                      <div className="flex items-center gap-1">
-                        <Badge variant="outline" className="text-[10px]">{a.categorias?.nome}</Badge>
-                        {Number(a.valor_padrao) > 0 && (
-                          <span className="text-[10px] text-muted-foreground">{formatCurrency(Number(a.valor_padrao))}</span>
-                        )}
+          {/* Lista agrupada por categoria */}
+          {(() => {
+            const grouped: Record<string, typeof atalhos> = {};
+            atalhos.forEach(a => {
+              const catNome = a.categorias?.nome || 'Sem categoria';
+              if (!grouped[catNome]) grouped[catNome] = [];
+              grouped[catNome].push(a);
+            });
+            return Object.entries(grouped).map(([catNome, items]) => (
+              <div key={catNome} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: items[0]?.categorias?.cor || '#888' }}
+                  />
+                  <h3 className="text-sm font-semibold text-muted-foreground">{catNome}</h3>
+                  <span className="text-xs text-muted-foreground">({items.length})</span>
+                </div>
+                {items.map(a => (
+                  <Card key={a.id}>
+                    <CardContent className="p-3 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="h-8 w-8 rounded-md shrink-0 flex items-center justify-center" style={{ backgroundColor: a.cor || '#3B82F6' }}>
+                          <span className="text-white text-xs">
+                            {ICONES.find(i => i.value === a.icone)?.label.split(' ')[0] || '⚡'}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{a.nome}</p>
+                          <div className="flex items-center gap-1">
+                            {Number(a.valor_padrao) > 0 && (
+                              <span className="text-[10px] text-muted-foreground">{formatCurrency(Number(a.valor_padrao))}</span>
+                            )}
+                            {!Number(a.valor_padrao) && (
+                              <span className="text-[10px] text-muted-foreground">Valor manual</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEditAtalho(a)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteAtalho(a.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Switch checked={a.ativo} onCheckedChange={() => toggleAtalho(a.id, a.ativo)} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEditAtalho(a)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteAtalho(a.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Switch checked={a.ativo} onCheckedChange={() => toggleAtalho(a.id, a.ativo)} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ));
+          })()}
         </TabsContent>
 
         {/* PESSOAS TAB */}
