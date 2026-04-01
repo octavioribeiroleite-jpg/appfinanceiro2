@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useLancamentos, useLancamentosAno, useCategorias, useAtalhosRapidos } from '@/hooks/useFinanceData';
+import { useLancamentos, useLancamentosAno, useAtalhosRapidos, useModelosRecorrentes } from '@/hooks/useFinanceData';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, MESES } from '@/lib/format';
@@ -11,13 +11,19 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   TrendingUp, TrendingDown, Church, Receipt, Fuel,
-  Wallet, ArrowUpRight, Plus, Zap, Activity, Heart, Dumbbell, ShoppingBag,
+  Wallet, ArrowUpRight, Plus, Zap, Activity, Heart, Dumbbell, ShoppingBag, Briefcase,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+import SalaryForecast from '@/components/dashboard/SalaryForecast';
+import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
+import InvestmentCard from '@/components/dashboard/InvestmentCard';
+import QuickValueDialog from '@/components/dashboard/QuickValueDialog';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   zap: Zap, activity: Activity, heart: Heart, dumbbell: Dumbbell,
   'shopping-bag': ShoppingBag, receipt: Receipt, fuel: Fuel, church: Church,
+  briefcase: Briefcase,
 };
 
 const now = new Date();
@@ -29,10 +35,26 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [mes, setMes] = useState(now.getMonth() + 1);
   const [ano, setAno] = useState(now.getFullYear());
+  const [dialogAtalho, setDialogAtalho] = useState<typeof atalhos[0] | null>(null);
 
   const { data: lancamentosMes = [] } = useLancamentos(mes, ano);
   const { data: lancamentosAno = [] } = useLancamentosAno(ano);
   const { data: atalhos = [] } = useAtalhosRapidos();
+  const { data: modelos = [] } = useModelosRecorrentes();
+
+  // Previsão salarial: soma dos modelos recorrentes ativos de receita
+  const previsao = useMemo(() => {
+    return modelos
+      .filter(m => m.tipo_lancamento === 'receita' && m.ativo)
+      .reduce((s, m) => s + Number(m.valor_padrao), 0);
+  }, [modelos]);
+
+  // Já recebido: receitas do mês com status recebido
+  const recebido = useMemo(() => {
+    return lancamentosMes
+      .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido')
+      .reduce((s, l) => s + Number(l.valor_bruto), 0);
+  }, [lancamentosMes]);
 
   const resumoMes = useMemo(() => {
     const receitas = lancamentosMes.filter(l => l.tipo_lancamento === 'receita');
@@ -59,16 +81,16 @@ export default function Dashboard() {
   }, [lancamentosAno]);
 
   const chartMensal = useMemo(() => {
-    const meses: Record<number, { bruto: number; liquido: number }> = {};
+    const mesesData: Record<number, { bruto: number; liquido: number }> = {};
     lancamentosAno.filter(l => l.tipo_lancamento === 'receita').forEach(l => {
-      if (!meses[l.competencia_mes]) meses[l.competencia_mes] = { bruto: 0, liquido: 0 };
-      meses[l.competencia_mes].bruto += Number(l.valor_bruto);
-      meses[l.competencia_mes].liquido += Number(l.valor_liquido);
+      if (!mesesData[l.competencia_mes]) mesesData[l.competencia_mes] = { bruto: 0, liquido: 0 };
+      mesesData[l.competencia_mes].bruto += Number(l.valor_bruto);
+      mesesData[l.competencia_mes].liquido += Number(l.valor_liquido);
     });
     return Array.from({ length: 12 }, (_, i) => ({
       mes: MESES[i].substring(0, 3),
-      bruto: meses[i + 1]?.bruto || 0,
-      liquido: meses[i + 1]?.liquido || 0,
+      bruto: mesesData[i + 1]?.bruto || 0,
+      liquido: mesesData[i + 1]?.liquido || 0,
     }));
   }, [lancamentosAno]);
 
@@ -83,18 +105,14 @@ export default function Dashboard() {
     return Object.values(cats);
   }, [lancamentosMes]);
 
-  const handleAtalho = useCallback(async (atalho: typeof atalhos[0]) => {
+  const launchEntry = useCallback(async (atalho: typeof atalhos[0], valorOverride?: number) => {
     if (!user) return;
-    if (!atalho.valor_padrao || Number(atalho.valor_padrao) === 0) {
-      navigate(`/novo?categoria_id=${atalho.categoria_id}&tipo=receita${atalho.pessoa_id ? `&pessoa_id=${atalho.pessoa_id}` : ''}`);
-      return;
-    }
+    const valor = valorOverride ?? Number(atalho.valor_padrao);
 
-    // Fetch rule for this category
     const { data: regra } = await supabase.rpc('obter_regra_categoria', {
       p_user_id: user.id,
       p_categoria_id: atalho.categoria_id,
-      p_pessoa_id: atalho.pessoa_id || atalho.categoria_id, // fallback
+      p_pessoa_id: atalho.pessoa_id || atalho.categoria_id,
     });
 
     const r = regra?.[0];
@@ -105,7 +123,7 @@ export default function Dashboard() {
       categoria_id: atalho.categoria_id,
       descricao: atalho.nome,
       tipo_lancamento: 'receita' as const,
-      valor_bruto: Number(atalho.valor_padrao),
+      valor_bruto: valor,
       percentual_dizimo: r?.percentual_dizimo ?? 0,
       percentual_imposto: r?.percentual_imposto ?? 0,
       percentual_gasolina: r?.percentual_gasolina ?? 0,
@@ -124,9 +142,19 @@ export default function Dashboard() {
     } else {
       queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
       queryClient.invalidateQueries({ queryKey: ['lancamentos-ano'] });
-      toast({ title: `${atalho.nome} — ${formatCurrency(Number(atalho.valor_padrao))} lançado!` });
+      toast({ title: `${atalho.nome} — ${formatCurrency(valor)} lançado!` });
     }
-  }, [user, navigate, toast, queryClient]);
+  }, [user, toast, queryClient]);
+
+  const handleAtalho = useCallback((atalho: typeof atalhos[0]) => {
+    if (!user) return;
+    if (!atalho.valor_padrao || Number(atalho.valor_padrao) === 0) {
+      // Open dialog to enter value
+      setDialogAtalho(atalho);
+      return;
+    }
+    launchEntry(atalho);
+  }, [user, launchEntry]);
 
   const cards = [
     { title: 'Bruto', value: resumoMes.bruto, icon: TrendingUp, color: 'text-primary' },
@@ -139,12 +167,13 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Header + month/year selector */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
           <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
-            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
             <SelectContent>
               {MESES.map((m, i) => (
                 <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
@@ -152,7 +181,7 @@ export default function Dashboard() {
             </SelectContent>
           </Select>
           <Select value={String(ano)} onValueChange={v => setAno(Number(v))}>
-            <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
             <SelectContent>
               {[2024, 2025, 2026, 2027].map(a => (
                 <SelectItem key={a} value={String(a)}>{a}</SelectItem>
@@ -162,8 +191,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Atalhos rápidos dinâmicos */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {/* Previsão Salarial */}
+      <SalaryForecast previsao={previsao} recebido={recebido} />
+
+      {/* Atalhos rápidos */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {atalhos.map(atalho => {
           const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
           return (
@@ -191,7 +223,7 @@ export default function Dashboard() {
           );
         })}
         {atalhos.length === 0 && (
-          <Link to="/configuracoes" className="col-span-2 sm:col-span-4">
+          <Link to="/configuracoes" className="col-span-2 sm:col-span-3">
             <Button variant="outline" className="w-full h-14 gap-2 text-muted-foreground">
               <Plus className="h-4 w-4" /> Configurar atalhos rápidos
             </Button>
@@ -199,7 +231,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Cards do mês */}
+      {/* Cards do mês + Investimento */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {cards.map((c, i) => (
           <Card key={c.title} className={i === cards.length - 1 ? 'col-span-2 sm:col-span-1' : ''}>
@@ -213,6 +245,12 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Investimento */}
+      <InvestmentCard liquidoMes={resumoMes.liquido} />
+
+      {/* Ganhos por Fonte */}
+      <CategoryBreakdown lancamentos={lancamentosMes} />
 
       {/* Resumo anual */}
       <Card>
@@ -278,6 +316,16 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick value dialog */}
+      <QuickValueDialog
+        open={!!dialogAtalho}
+        onOpenChange={open => !open && setDialogAtalho(null)}
+        nome={dialogAtalho?.nome || ''}
+        onConfirm={valor => {
+          if (dialogAtalho) launchEntry(dialogAtalho, valor);
+        }}
+      />
 
       {/* FAB */}
       <Link to="/novo" className="fixed bottom-20 right-4 md:bottom-6 z-50">
