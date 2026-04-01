@@ -1,53 +1,67 @@
 
 
-# Reorganizar Dashboard — Layout por seções claras
+# Melhorar Relatórios — Abas fixas Octávio/Cíntia com progresso recebido/pendente
 
-## Problema atual
-Os atalhos rápidos aparecem todos expandidos (ex: 12 alunos da Cíntia ocupam muito espaço). O usuário quer uma hierarquia clara:
-1. Previsão salarial no topo
-2. Atalhos rápidos (botões de lançamento rápido)
-3. Cards de resumo por categoria (agrupados, colapsáveis) — ex: "Personal Cintia" mostra 1 card com total e qtd, ao clicar abre popup com a lista completa
+## O que muda
 
-## Nova ordem do Dashboard
+A página de Relatórios já existe com abas por pessoa, mas tem problemas:
+- Só mostra abas de pessoas que já têm lançamentos (se não lançou nada, não aparece)
+- Não mostra progresso recebido vs pendente
+- Dízimo não tem destaque suficiente
+
+## Nova estrutura
 
 ```text
-┌─────────────────────────────┐
-│ 1. Previsão Salarial        │  ← SalaryForecast (já existe)
-├─────────────────────────────┤
-│ 2. Atalhos Rápidos          │  ← Botões grid 3 colunas
-│    [+ Adicionar atalho]     │
-├─────────────────────────────┤
-│ 3. Resumo por Categoria     │  ← Cards agrupados:
-│    ┌──────┐ ┌──────┐        │     Personal Cintia (12) R$8.610
-│    │Eletro│ │RaioX │        │     Clica → popup com lista
-│    └──────┘ └──────┘        │
-│    ┌────────────────┐       │
-│    │Personal Cintia │       │
-│    └────────────────┘       │
-├─────────────────────────────┤
-│ 4. Cards financeiros (7)    │  ← Bruto, Líquido, Dízimo, etc.
-│ 5. Investimento             │
-│ 6. Ganhos por Fonte         │
-│ 7. Resumo Anual + Charts   │
-└─────────────────────────────┘
+┌─────────────────────────────────┐
+│  Relatórios    [Mês ▼] [Ano ▼] │
+├─────────────────────────────────┤
+│  [Octávio] [Cíntia] [Geral] [Anual] │
+├─────────────────────────────────┤
+│  ┌─ Progresso do Mês ─────────┐│
+│  │ Recebido: R$ 3.200 / 8.610 ││
+│  │ ████████░░░░░░  37%        ││
+│  │ Falta receber: R$ 5.410    ││
+│  └────────────────────────────┘│
+│                                 │
+│  ┌─ Resumo ───────────────────┐│
+│  │ Bruto    Líquido           ││
+│  │ Dízimo   Imposto  Gasolina ││
+│  └────────────────────────────┘│
+│                                 │
+│  ┌─ DÍZIMO DO MÊS ───────────┐│
+│  │  ⛪ R$ 861,00              ││
+│  │  (destaque grande)         ││
+│  └────────────────────────────┘│
+│                                 │
+│  Detalhamento por Categoria    │
+│  (tabela existente)            │
+│                                 │
+│  Lançamentos Detalhados        │
+│  (com status recebido/pendente)│
+└─────────────────────────────────┘
 ```
 
-## Mudanças
+## Mudanças em `src/pages/Relatorios.tsx`
 
-### 1. Dashboard.tsx — Reordenar e criar seção de categorias colapsadas
-- Mover `SalaryForecast` para ser o **primeiro** elemento (acima dos atalhos)
-- Manter atalhos rápidos logo abaixo
-- **Nova seção**: "Resumo por Categoria" — agrupa atalhos por `categoria_id`, mostra 1 card por categoria com:
-  - Nome da categoria, cor, quantidade de atalhos, valor total
-  - Ao clicar no card, abre um Dialog/Sheet listando todos os atalhos daquela categoria com botão de lançar cada um
-- Adicionar estado `categoriaAberta` para controlar qual popup está aberto
+### 1. Abas fixas — sempre mostrar Octávio e Cíntia
+- Usar todas as pessoas cadastradas (não filtrar por `pessoaIds`), sempre exibir as abas
+- Ordem: Octávio, Cíntia (Esposa), Geral, Anual
 
-### 2. Novo componente `CategoryGroupDialog.tsx`
-- Dialog que recebe uma lista de atalhos de uma categoria
-- Mostra lista com nome, valor, e botão "Lançar" em cada item
-- Ao clicar "Lançar", abre o `QuickValueDialog` existente para confirmar valor
+### 2. Barra de progresso recebido/pendente no `PessoaReport`
+- Calcular total de receitas com `status === 'recebido'` vs `status === 'pendente'`
+- Mostrar barra de progresso visual com porcentagem e valores
+- "Falta receber: R$ X"
 
-### Arquivos a modificar
-1. **`src/pages/Dashboard.tsx`** — Reordenar seções, criar grid de cards por categoria, gerenciar estado do popup
-2. **`src/components/dashboard/CategoryGroupDialog.tsx`** — Novo componente para listar atalhos de uma categoria em popup
+### 3. Card de Dízimo em destaque
+- Novo card grande após o resumo, com ícone ⛪ e valor total do dízimo do mês
+- Cor vermelha, fonte grande, fácil de ler para saber exatamente quanto devolver à igreja
+
+### 4. Manter tudo que já existe
+- Cards resumo (bruto, líquido, dízimo, imposto, gasolina, despesas)
+- Gráfico pizza de distribuição
+- Tabela por categoria
+- Lançamentos detalhados com status
+
+## Arquivo a modificar
+- **`src/pages/Relatorios.tsx`** — Único arquivo, refatorar abas e adicionar progresso + destaque dízimo
 
