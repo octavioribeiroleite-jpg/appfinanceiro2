@@ -247,19 +247,7 @@ export default function Configuracoes() {
                   </Select>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={handleSaveAtalho} className="flex-1">
-                  {editAtalhoId ? 'Salvar' : 'Adicionar'}
-                </Button>
-                {editAtalhoId && (
-                  <Button variant="outline" onClick={() => {
-                    setEditAtalhoId(null);
-                    setNovoAtalho({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
-                  }}>
-                    Cancelar
-                  </Button>
-                )}
-              </div>
+              <Button onClick={handleSaveAtalho} className="w-full">Adicionar</Button>
             </CardContent>
           </Card>
 
