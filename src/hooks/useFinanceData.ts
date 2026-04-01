@@ -114,3 +114,20 @@ export function useModelosRecorrentes() {
     enabled: !!user,
   });
 }
+
+export function useAtalhosRapidos() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['atalhos', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('atalhos_rapidos')
+        .select('*, categorias(*), pessoas(*)')
+        .eq('ativo', true)
+        .order('ordem');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+}
