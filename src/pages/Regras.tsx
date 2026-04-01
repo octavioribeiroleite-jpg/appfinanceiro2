@@ -108,16 +108,46 @@ export default function Regras() {
   };
 
   const handleCreate = async () => {
-    if (!user || !newForm.categoria_id) return;
+    if (!user) return;
+
+    let categoriaId = newForm.categoria_id;
+
+    // Create new category if needed
+    if (criarNovaCategoria) {
+      if (!novaCategoriaNome.trim()) {
+        toast({ title: 'Erro', description: 'Digite o nome da nova categoria', variant: 'destructive' });
+        return;
+      }
+      const { data: novaCat, error: catError } = await supabase.from('categorias').insert({
+        user_id: user.id,
+        nome: novaCategoriaNome.trim(),
+        tipo: 'receita',
+      }).select().single();
+      if (catError) {
+        toast({ title: 'Erro ao criar categoria', description: catError.message, variant: 'destructive' });
+        return;
+      }
+      categoriaId = novaCat.id;
+    }
+
+    if (!categoriaId) {
+      toast({ title: 'Erro', description: 'Selecione ou crie uma categoria', variant: 'destructive' });
+      return;
+    }
+
     const { error } = await supabase.from('regras_categoria').insert({
       user_id: user.id,
       ...newForm,
+      categoria_id: categoriaId,
       pessoa_id: newForm.pessoa_id || null,
     });
     if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     else {
       queryClient.invalidateQueries({ queryKey: ['regras'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias'] });
       setShowNew(false);
+      setCriarNovaCategoria(false);
+      setNovaCategoriaNome('');
       toast({ title: 'Regra criada!' });
     }
   };
