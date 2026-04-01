@@ -266,16 +266,17 @@ export default function Regras() {
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => {
                       if (editing === r.id) { setEditing(null); } else {
-                        setEditing(r.id);
-                        setForm({
-                          nome_categoria: r.categorias?.nome || '',
-                          percentual_dizimo: r.percentual_dizimo,
-                          percentual_imposto: r.percentual_imposto,
-                          percentual_gasolina: r.percentual_gasolina,
-                          aplicar_dizimo: r.aplicar_dizimo,
-                          aplicar_imposto: r.aplicar_imposto,
-                          aplicar_gasolina: r.aplicar_gasolina,
-                        });
+                      setEditing(r.id);
+                      setForm({
+                        nome_categoria: r.categorias?.nome || '',
+                        pessoa_id: r.pessoa_id || '',
+                        percentual_dizimo: r.percentual_dizimo,
+                        percentual_imposto: r.percentual_imposto,
+                        percentual_gasolina: r.percentual_gasolina,
+                        aplicar_dizimo: r.aplicar_dizimo,
+                        aplicar_imposto: r.aplicar_imposto,
+                        aplicar_gasolina: r.aplicar_gasolina,
+                      });
                       }
                     }}>
                       {editing === r.id ? 'Cancelar' : 'Editar'}
