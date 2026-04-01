@@ -1,67 +1,48 @@
 
 
-# Melhorar Relatórios — Abas fixas Octávio/Cíntia com progresso recebido/pendente
+# Caixinhas por Categoria nos Relatórios
 
-## O que muda
+## Mudança
+Apenas no arquivo `src/pages/Relatorios.tsx`, dentro do componente `PessoaReport`:
 
-A página de Relatórios já existe com abas por pessoa, mas tem problemas:
-- Só mostra abas de pessoas que já têm lançamentos (se não lançou nada, não aparece)
-- Não mostra progresso recebido vs pendente
-- Dízimo não tem destaque suficiente
+**Substituir** a tabela "Detalhamento por Categoria" (linhas 138-184) e a tabela "Lançamentos Detalhados" (linhas 186-219) por **cards individuais colapsáveis** para cada categoria.
 
-## Nova estrutura
+## Novo layout (após Dízimo do Mês)
 
 ```text
-┌─────────────────────────────────┐
-│  Relatórios    [Mês ▼] [Ano ▼] │
-├─────────────────────────────────┤
-│  [Octávio] [Cíntia] [Geral] [Anual] │
-├─────────────────────────────────┤
-│  ┌─ Progresso do Mês ─────────┐│
-│  │ Recebido: R$ 3.200 / 8.610 ││
-│  │ ████████░░░░░░  37%        ││
-│  │ Falta receber: R$ 5.410    ││
-│  └────────────────────────────┘│
-│                                 │
-│  ┌─ Resumo ───────────────────┐│
-│  │ Bruto    Líquido           ││
-│  │ Dízimo   Imposto  Gasolina ││
-│  └────────────────────────────┘│
-│                                 │
-│  ┌─ DÍZIMO DO MÊS ───────────┐│
-│  │  ⛪ R$ 861,00              ││
-│  │  (destaque grande)         ││
-│  └────────────────────────────┘│
-│                                 │
-│  Detalhamento por Categoria    │
-│  (tabela existente)            │
-│                                 │
-│  Lançamentos Detalhados        │
-│  (com status recebido/pendente)│
-└─────────────────────────────────┘
+── Fontes de Renda ──────────────────
+
+┌─ Raio X Dinheiro ──────────────────┐
+│ ● cor   Bruto: R$ 2.400           │
+│ Dízimo: R$ 240 · Imposto: R$ 168  │
+│ Gasolina: R$ 240                   │
+│ Líquido: R$ 1.752                  │
+│ 10 lançamentos · 6 recebidos      │
+│ ▼ (clica para expandir)           │
+│  ┌─ Fulano 1 - R$ 240 ✅ ─────┐  │
+│  ├─ Fulano 2 - R$ 240 ⏳ ─────┤  │
+│  └─ ...                        ┘  │
+└────────────────────────────────────┘
+
+┌─ Eletro ───────────────────────────┐
+│ (mesma estrutura)                  │
+└────────────────────────────────────┘
 ```
 
-## Mudanças em `src/pages/Relatorios.tsx`
+## Implementacao
 
-### 1. Abas fixas — sempre mostrar Octávio e Cíntia
-- Usar todas as pessoas cadastradas (não filtrar por `pessoaIds`), sempre exibir as abas
-- Ordem: Octávio, Cíntia (Esposa), Geral, Anual
+No `PessoaReport`, alterar o agrupamento `porCategoria` para incluir tambem:
+- `total` (count de lancamentos)
+- `recebidos` (count com status recebido)
+- `lancamentos[]` (array dos lancamentos daquela categoria)
 
-### 2. Barra de progresso recebido/pendente no `PessoaReport`
-- Calcular total de receitas com `status === 'recebido'` vs `status === 'pendente'`
-- Mostrar barra de progresso visual com porcentagem e valores
-- "Falta receber: R$ X"
+Substituir as duas secoes (tabela categoria + tabela lancamentos) por um `map` sobre as categorias, renderizando cada uma como um `Card` com `Collapsible`:
+- Header do card: nome com bolinha de cor, bruto e liquido em destaque
+- Corpo visivel: dizimo, imposto, gasolina em texto secundario + contagem
+- Conteudo colapsavel: lista dos lancamentos individuais com descricao, valor e badge de status
 
-### 3. Card de Dízimo em destaque
-- Novo card grande após o resumo, com ícone ⛪ e valor total do dízimo do mês
-- Cor vermelha, fonte grande, fácil de ler para saber exatamente quanto devolver à igreja
+Importar `Collapsible, CollapsibleTrigger, CollapsibleContent` de `@/components/ui/collapsible` e `ChevronDown` de lucide-react.
 
-### 4. Manter tudo que já existe
-- Cards resumo (bruto, líquido, dízimo, imposto, gasolina, despesas)
-- Gráfico pizza de distribuição
-- Tabela por categoria
-- Lançamentos detalhados com status
-
-## Arquivo a modificar
-- **`src/pages/Relatorios.tsx`** — Único arquivo, refatorar abas e adicionar progresso + destaque dízimo
+## Arquivo unico a modificar
+- `src/pages/Relatorios.tsx`
 
