@@ -155,6 +155,16 @@ export default function Regras() {
 
   const previewCalc = (bruto: number, perc: number, ativo: boolean) => ativo ? bruto * perc / 100 : 0;
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja excluir esta regra?')) return;
+    const { error } = await supabase.from('regras_categoria').delete().eq('id', id);
+    if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    else {
+      queryClient.invalidateQueries({ queryKey: ['regras'] });
+      toast({ title: 'Regra excluída!' });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
