@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Wallet, Church, Receipt, Fuel, TrendingDown } from 'lucide-react';
 
@@ -34,6 +35,12 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
   const totalDespesas = despesas.reduce((s, l) => s + Number(l.valor_bruto), 0);
   const saldo = liquido - totalDespesas;
 
+  // Progresso recebido vs pendente
+  const recebido = receitas.filter(l => l.status === 'recebido').reduce((s, l) => s + Number(l.valor_bruto), 0);
+  const pendente = receitas.filter(l => l.status === 'pendente').reduce((s, l) => s + Number(l.valor_bruto), 0);
+  const totalPrevisto = recebido + pendente;
+  const progressoPct = totalPrevisto > 0 ? Math.round((recebido / totalPrevisto) * 100) : 0;
+
   // Por categoria
   const porCategoria: Record<string, { nome: string; bruto: number; liquido: number; dizimo: number; imposto: number; gasolina: number; cor: string }> = {};
   receitas.forEach(l => {
@@ -48,7 +55,6 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
   });
   const cats = Object.values(porCategoria);
 
-  // Lançamentos individuais de receita
   const lancamentosReceita = receitas.sort((a, b) => (a.descricao || '').localeCompare(b.descricao || ''));
 
   if (bruto === 0 && totalDespesas === 0) {
@@ -64,27 +70,55 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
 
   return (
     <div className="space-y-4">
+      {/* Progresso do mês */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Progresso do Mês</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Recebido</span>
+            <span className="font-semibold text-emerald-600">{formatCurrency(recebido)} <span className="text-muted-foreground font-normal">/ {formatCurrency(totalPrevisto)}</span></span>
+          </div>
+          <Progress value={progressoPct} className="h-3" />
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">{progressoPct}% recebido</span>
+            <span className="font-semibold text-amber-600">Falta: {formatCurrency(pendente)}</span>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Cards resumo */}
       <div className="grid grid-cols-2 gap-2">
         <ResumoCard icon={TrendingUp} label="Bruto" value={bruto} color="text-primary" />
         <ResumoCard icon={Wallet} label="Líquido" value={liquido} color="text-emerald-500" />
-        <ResumoCard icon={Church} label="Dízimo" value={dizimo} color="text-red-500" />
         <ResumoCard icon={Receipt} label="Imposto" value={imposto} color="text-rose-600" />
         <ResumoCard icon={Fuel} label="Gasolina" value={gasolina} color="text-amber-500" />
         <ResumoCard icon={TrendingDown} label="Despesas" value={totalDespesas} color="text-destructive" />
+        <div className="flex items-center gap-2 p-3 rounded-lg border bg-card">
+          <Wallet className={`h-4 w-4 shrink-0 ${saldo >= 0 ? 'text-emerald-500' : 'text-destructive'}`} />
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground">Saldo</p>
+            <p className={`text-sm font-bold ${saldo >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>{formatCurrency(saldo)}</p>
+          </div>
+        </div>
       </div>
 
-      {/* Saldo */}
-      <Card>
-        <CardContent className="p-4 text-center">
-          <p className="text-xs text-muted-foreground">Saldo Final</p>
-          <p className={`text-2xl font-bold ${saldo >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
-            {formatCurrency(saldo)}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Dízimo em destaque */}
+      {dizimo > 0 && (
+        <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30">
+          <CardContent className="p-4 text-center space-y-1">
+            <div className="flex items-center justify-center gap-2">
+              <Church className="h-6 w-6 text-red-600" />
+              <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Dízimo do Mês</p>
+            </div>
+            <p className="text-3xl font-bold text-red-600">{formatCurrency(dizimo)}</p>
+            <p className="text-[10px] text-muted-foreground">Valor a devolver para a igreja</p>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Gráfico pizza - distribuição */}
+      {/* Gráfico pizza */}
       {pieData.length > 0 && (
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição do Bruto</CardTitle></CardHeader>
@@ -101,7 +135,7 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
         </Card>
       )}
 
-      {/* Por categoria - detalhado */}
+      {/* Por categoria */}
       {cats.length > 0 && (
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Detalhamento por Categoria</CardTitle></CardHeader>
@@ -149,7 +183,7 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
         </Card>
       )}
 
-      {/* Lista de lançamentos */}
+      {/* Lançamentos detalhados */}
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Lançamentos Detalhados</CardTitle></CardHeader>
         <CardContent className="p-0">
@@ -194,11 +228,6 @@ export default function Relatorios() {
   const { data: lancamentosAno = [] } = useLancamentosAno(ano);
   const { data: pessoas = [] } = usePessoas();
 
-  const pessoasComDados = useMemo(() => {
-    const pessoaIds = new Set(lancamentosMes.map(l => l.pessoa_id));
-    return pessoas.filter(p => pessoaIds.has(p.id));
-  }, [lancamentosMes, pessoas]);
-
   const lancamentosPorPessoa = useMemo(() => {
     const map: Record<string, any[]> = {};
     lancamentosMes.forEach(l => {
@@ -226,21 +255,8 @@ export default function Relatorios() {
     }));
   }, [lancamentosAno]);
 
-  // Resumo geral do mês
-  const resumoGeral = useMemo(() => {
-    const receitas = lancamentosMes.filter(l => l.tipo_lancamento === 'receita');
-    const despesas = lancamentosMes.filter(l => l.tipo_lancamento === 'despesa');
-    return {
-      bruto: receitas.reduce((s, l) => s + Number(l.valor_bruto), 0),
-      liquido: receitas.reduce((s, l) => s + Number(l.valor_liquido), 0),
-      dizimo: receitas.reduce((s, l) => s + Number(l.valor_dizimo), 0),
-      imposto: receitas.reduce((s, l) => s + Number(l.valor_imposto), 0),
-      gasolina: receitas.reduce((s, l) => s + Number(l.valor_gasolina), 0),
-      despesas: despesas.reduce((s, l) => s + Number(l.valor_bruto), 0),
-    };
-  }, [lancamentosMes]);
-
-  const defaultTab = pessoasComDados.length > 0 ? pessoasComDados[0].id : 'geral';
+  // Abas fixas: todas as pessoas cadastradas + Geral + Anual
+  const defaultTab = pessoas.length > 0 ? pessoas[0].id : 'geral';
 
   return (
     <div className="space-y-4">
@@ -259,25 +275,25 @@ export default function Relatorios() {
       </div>
 
       <Tabs defaultValue={defaultTab}>
-        <TabsList className="w-full grid" style={{ gridTemplateColumns: `repeat(${pessoasComDados.length + 2}, 1fr)` }}>
-          <TabsTrigger value="geral">Geral</TabsTrigger>
-          {pessoasComDados.map(p => (
-            <TabsTrigger key={p.id} value={p.id}>{p.nome}</TabsTrigger>
+        <TabsList className="w-full grid" style={{ gridTemplateColumns: `repeat(${pessoas.length + 2}, 1fr)` }}>
+          {pessoas.map(p => (
+            <TabsTrigger key={p.id} value={p.id} className="text-xs">{p.nome}</TabsTrigger>
           ))}
-          <TabsTrigger value="anual">Anual</TabsTrigger>
+          <TabsTrigger value="geral" className="text-xs">Geral</TabsTrigger>
+          <TabsTrigger value="anual" className="text-xs">Anual</TabsTrigger>
         </TabsList>
+
+        {/* Abas por pessoa — sempre visíveis */}
+        {pessoas.map(p => (
+          <TabsContent key={p.id} value={p.id}>
+            <PessoaReport lancamentos={lancamentosPorPessoa[p.id] || []} nome={p.nome} />
+          </TabsContent>
+        ))}
 
         {/* Aba Geral */}
         <TabsContent value="geral">
           <PessoaReport lancamentos={lancamentosMes} nome="Todos" />
         </TabsContent>
-
-        {/* Abas por pessoa */}
-        {pessoasComDados.map(p => (
-          <TabsContent key={p.id} value={p.id}>
-            <PessoaReport lancamentos={lancamentosPorPessoa[p.id] || []} nome={p.nome} />
-          </TabsContent>
-        ))}
 
         {/* Aba Anual */}
         <TabsContent value="anual" className="space-y-4">
@@ -297,7 +313,6 @@ export default function Relatorios() {
             </CardContent>
           </Card>
 
-          {/* Resumo anual por mês */}
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm">Totais por Mês</CardTitle></CardHeader>
             <CardContent className="p-0">
