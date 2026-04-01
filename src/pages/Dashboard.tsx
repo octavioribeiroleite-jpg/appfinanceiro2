@@ -109,11 +109,16 @@ export default function Dashboard() {
     if (!user) return;
     const valor = valorOverride ?? Number(atalho.valor_padrao);
 
-    const { data: regra } = await supabase.rpc('obter_regra_categoria', {
-      p_user_id: user.id,
-      p_categoria_id: atalho.categoria_id,
-      p_pessoa_id: atalho.pessoa_id || atalho.categoria_id,
-    }).catch(() => ({ data: null }));
+    let r: any = null;
+    try {
+      const { data: regra } = await supabase.rpc('obter_regra_categoria', {
+        p_user_id: user.id,
+        p_categoria_id: atalho.categoria_id,
+        p_pessoa_id: atalho.pessoa_id || atalho.categoria_id,
+      });
+      r = regra?.[0];
+    } catch {}
+
 
     const r = regra?.[0];
     const hoje = new Date();
