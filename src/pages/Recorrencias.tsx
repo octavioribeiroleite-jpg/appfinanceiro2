@@ -198,8 +198,6 @@ export default function Recorrencias() {
 
       {isLoading ? (
         <p className="text-center text-muted-foreground py-8">Carregando...</p>
-      ) : modelos.length === 0 ? (
-        <p className="text-center text-muted-foreground py-8">Nenhum modelo recorrente</p>
       ) : (
         <div className="space-y-4">
           {pessoas.filter(p => p.tipo !== 'familia').map(pessoa => {
