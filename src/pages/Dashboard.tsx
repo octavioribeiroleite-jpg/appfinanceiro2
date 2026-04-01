@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   TrendingUp, TrendingDown, Church, Receipt, Fuel,
-  Wallet, ArrowUpRight, Plus, Zap, Activity, Heart, Dumbbell, ShoppingBag, Briefcase,
+  Wallet, ArrowUpRight, Plus,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -19,12 +19,7 @@ import SalaryForecast from '@/components/dashboard/SalaryForecast';
 import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
 import InvestmentCard from '@/components/dashboard/InvestmentCard';
 import QuickValueDialog from '@/components/dashboard/QuickValueDialog';
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  zap: Zap, activity: Activity, heart: Heart, dumbbell: Dumbbell,
-  'shopping-bag': ShoppingBag, receipt: Receipt, fuel: Fuel, church: Church,
-  briefcase: Briefcase,
-};
+import CategoryGroupDialog from '@/components/dashboard/CategoryGroupDialog';
 
 const now = new Date();
 
@@ -35,26 +30,40 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [mes, setMes] = useState(now.getMonth() + 1);
   const [ano, setAno] = useState(now.getFullYear());
-  const [dialogAtalho, setDialogAtalho] = useState<typeof atalhos[0] | null>(null);
+  const [dialogAtalho, setDialogAtalho] = useState<any>(null);
+  const [categoriaAberta, setCategoriaAberta] = useState<string | null>(null);
 
   const { data: lancamentosMes = [] } = useLancamentos(mes, ano);
   const { data: lancamentosAno = [] } = useLancamentosAno(ano);
   const { data: atalhos = [] } = useAtalhosRapidos();
   const { data: modelos = [] } = useModelosRecorrentes();
 
-  // Previsão salarial: soma dos modelos recorrentes ativos de receita
   const previsao = useMemo(() => {
     return modelos
       .filter(m => m.tipo_lancamento === 'receita' && m.ativo)
       .reduce((s, m) => s + Number(m.valor_padrao), 0);
   }, [modelos]);
 
-  // Já recebido: receitas do mês com status recebido
   const recebido = useMemo(() => {
     return lancamentosMes
       .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido')
       .reduce((s, l) => s + Number(l.valor_bruto), 0);
   }, [lancamentosMes]);
+
+  // Agrupar atalhos por categoria
+  const atalhosAgrupados = useMemo(() => {
+    const grouped: Record<string, { nome: string; cor: string; items: typeof atalhos }> = {};
+    atalhos.forEach(a => {
+      const catId = a.categoria_id;
+      const catNome = a.categorias?.nome || 'Geral';
+      const catCor = a.categorias?.cor || '#888';
+      if (!grouped[catId]) grouped[catId] = { nome: catNome, cor: catCor, items: [] };
+      grouped[catId].items.push(a);
+    });
+    return grouped;
+  }, [atalhos]);
+
+  const categoriaAbertaData = categoriaAberta ? atalhosAgrupados[categoriaAberta] : null;
 
   const resumoMes = useMemo(() => {
     const receitas = lancamentosMes.filter(l => l.tipo_lancamento === 'receita');
@@ -105,7 +114,7 @@ export default function Dashboard() {
     return Object.values(cats);
   }, [lancamentosMes]);
 
-  const launchEntry = useCallback(async (atalho: typeof atalhos[0], valorOverride?: number) => {
+  const launchEntry = useCallback(async (atalho: any, valorOverride?: number) => {
     if (!user) return;
     const valor = valorOverride ?? Number(atalho.valor_padrao);
 
@@ -162,10 +171,10 @@ export default function Dashboard() {
     }
   }, [user, toast, queryClient]);
 
-  const handleAtalho = useCallback((atalho: typeof atalhos[0]) => {
-    if (!user) return;
+  const handleLancarFromGroup = useCallback((atalho: any) => {
+    setCategoriaAberta(null);
     setDialogAtalho(atalho);
-  }, [user]);
+  }, []);
 
   const cards = [
     { title: 'Bruto', value: resumoMes.bruto, icon: TrendingUp, color: 'text-primary' },
@@ -202,85 +211,84 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Atalhos rápidos agrupados por categoria — fixos no topo */}
-      {(() => {
-        const grouped: Record<string, typeof atalhos> = {};
-        atalhos.forEach(a => {
-          const catNome = a.categorias?.nome || 'Geral';
-          if (!grouped[catNome]) grouped[catNome] = [];
-          grouped[catNome].push(a);
-        });
-        const entries = Object.entries(grouped);
-        if (entries.length === 0) {
-          return (
-            <Link to="/configuracoes" className="block">
-              <Button variant="outline" className="w-full h-14 gap-2 text-muted-foreground">
-                <Plus className="h-4 w-4" /> Configurar atalhos rápidos
-              </Button>
-            </Link>
-          );
-        }
-        return (
-          <>
-            {entries.map(([catNome, items]) => {
-              const totalGrupo = items.reduce((s, a) => s + Number(a.valor_padrao), 0);
-              return (
-                <div key={catNome} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: items[0]?.categorias?.cor || '#888' }}
-                    />
-                    <h3 className="text-sm font-semibold">{catNome}</h3>
-                    <span className="text-xs text-muted-foreground">({items.length})</span>
-                    {totalGrupo > 0 && (
-                      <span className="text-xs font-semibold ml-auto">{formatCurrency(totalGrupo)}</span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {items.map(atalho => {
-                      const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
-                      return (
-                        <Button
-                          key={atalho.id}
-                          variant="outline"
-                          className="w-full h-16 gap-2 text-xs font-medium justify-start px-2"
-                          onClick={() => handleAtalho(atalho)}
-                        >
-                          <div
-                            className="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
-                            style={{ backgroundColor: atalho.cor || '#3B82F6' }}
-                          >
-                            <Icon className="h-4 w-4 text-white" />
-                          </div>
-                          <span className="truncate text-left">
-                            <span className="block truncate">{atalho.nome}</span>
-                            {Number(atalho.valor_padrao) > 0 && (
-                              <span className="block text-[10px] text-muted-foreground font-normal">
-                                {formatCurrency(Number(atalho.valor_padrao))}
-                              </span>
-                            )}
-                          </span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-            <Link to="/configuracoes" className="block">
-              <Button variant="outline" className="w-full h-12 gap-2 text-muted-foreground">
-                <Plus className="h-4 w-4" /> Adicionar atalho rápido
-              </Button>
-            </Link>
-          </>
-        );
-      })()}
-
-      {/* Previsão Salarial */}
+      {/* 1. Previsão Salarial */}
       <SalaryForecast previsao={previsao} recebido={recebido} />
 
-      {/* Cards do mês + Investimento */}
+      {/* 2. Atalhos Rápidos — botões individuais para lançamento rápido */}
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground">Atalhos Rápidos</h2>
+        {atalhos.length > 0 ? (
+          <div className="grid grid-cols-3 gap-2">
+            {atalhos.map(atalho => (
+              <Button
+                key={atalho.id}
+                variant="outline"
+                className="w-full h-14 text-xs font-medium justify-start px-2 gap-2"
+                onClick={() => setDialogAtalho(atalho)}
+              >
+                <div
+                  className="h-8 w-8 rounded-md flex items-center justify-center shrink-0 text-base"
+                  style={{ backgroundColor: atalho.cor || '#3B82F6' }}
+                >
+                  {atalho.icone || '⚡'}
+                </div>
+                <span className="truncate text-left">
+                  <span className="block truncate">{atalho.nome}</span>
+                  {Number(atalho.valor_padrao) > 0 && (
+                    <span className="block text-[10px] text-muted-foreground font-normal">
+                      {formatCurrency(Number(atalho.valor_padrao))}
+                    </span>
+                  )}
+                </span>
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <Link to="/configuracoes" className="block">
+            <Button variant="outline" className="w-full h-14 gap-2 text-muted-foreground">
+              <Plus className="h-4 w-4" /> Configurar atalhos rápidos
+            </Button>
+          </Link>
+        )}
+        <Link to="/configuracoes" className="block">
+          <Button variant="outline" className="w-full h-10 gap-2 text-muted-foreground text-xs">
+            <Plus className="h-4 w-4" /> Adicionar atalho rápido
+          </Button>
+        </Link>
+      </div>
+
+      {/* 3. Resumo por Categoria — cards agrupados */}
+      {Object.keys(atalhosAgrupados).length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-muted-foreground">Resumo por Categoria</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {Object.entries(atalhosAgrupados).map(([catId, group]) => {
+              const totalGrupo = group.items.reduce((s, a) => s + Number(a.valor_padrao), 0);
+              return (
+                <Card
+                  key={catId}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setCategoriaAberta(catId)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div
+                        className="h-3 w-3 rounded-full shrink-0"
+                        style={{ backgroundColor: group.cor }}
+                      />
+                      <span className="text-sm font-semibold truncate">{group.nome}</span>
+                    </div>
+                    <p className="text-lg font-bold">{formatCurrency(totalGrupo)}</p>
+                    <p className="text-xs text-muted-foreground">{group.items.length} itens</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 4. Cards financeiros do mês */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {cards.map((c, i) => (
           <Card key={c.title} className={i === cards.length - 1 ? 'col-span-2 sm:col-span-1' : ''}>
@@ -295,13 +303,13 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Investimento */}
+      {/* 5. Investimento */}
       <InvestmentCard liquidoMes={resumoMes.liquido} />
 
-      {/* Ganhos por Fonte */}
+      {/* 6. Ganhos por Fonte */}
       <CategoryBreakdown lancamentos={lancamentosMes} />
 
-      {/* Resumo anual */}
+      {/* 7. Resumo anual */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Resumo {ano}</CardTitle>
@@ -365,6 +373,16 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Category Group Dialog */}
+      <CategoryGroupDialog
+        open={!!categoriaAberta && !!categoriaAbertaData}
+        onOpenChange={open => !open && setCategoriaAberta(null)}
+        categoriaNome={categoriaAbertaData?.nome || ''}
+        categoriaCor={categoriaAbertaData?.cor || '#888'}
+        atalhos={categoriaAbertaData?.items || []}
+        onLancar={handleLancarFromGroup}
+      />
 
       {/* Quick value dialog */}
       <QuickValueDialog
