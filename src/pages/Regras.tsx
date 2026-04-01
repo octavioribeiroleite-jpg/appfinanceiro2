@@ -166,12 +166,28 @@ export default function Regras() {
           <CardContent className="p-4 space-y-3">
             <div className="space-y-2">
               <Label>Categoria</Label>
-              <Select value={newForm.categoria_id} onValueChange={v => setNewForm(f => ({ ...f, categoria_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {categoriasReceita.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2 mb-1">
+                <Button
+                  type="button" variant={criarNovaCategoria ? 'default' : 'outline'} size="sm"
+                  onClick={() => setCriarNovaCategoria(!criarNovaCategoria)}
+                >
+                  {criarNovaCategoria ? 'Selecionar existente' : '+ Nova categoria'}
+                </Button>
+              </div>
+              {criarNovaCategoria ? (
+                <Input
+                  placeholder="Nome da nova fonte de renda"
+                  value={novaCategoriaNome}
+                  onChange={e => setNovaCategoriaNome(e.target.value)}
+                />
+              ) : (
+                <Select value={newForm.categoria_id} onValueChange={v => setNewForm(f => ({ ...f, categoria_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {categoriasReceita.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Pessoa (opcional - global se vazio)</Label>
