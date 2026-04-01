@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLancamentos, useLancamentosAno, useAtalhosRapidos, useModelosRecorrentes } from '@/hooks/useFinanceData';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { formatCurrency, MESES } from '@/lib/format';
+import { formatCurrency, MESES, calcularDescontos } from '@/lib/format';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
