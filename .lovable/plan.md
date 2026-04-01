@@ -1,63 +1,73 @@
 
 
-# Atalhos Rápidos Configuráveis
+# Dashboard Redesenhado — Previsão, Atalhos por Categoria e Investimento
 
-Transformar os atalhos rápidos do Dashboard (hoje fixos no código) em atalhos dinâmicos que o usuário gerencia: cria, edita nome, valor padrão, categoria, e ao clicar já cria o lançamento automaticamente.
+## Resumo
 
-## 1. Nova tabela `atalhos_rapidos`
+Reorganizar o Dashboard com: barra de previsão salarial no topo, atalhos rápidos renomeados por fonte de renda, breakdown inteligente por categoria, acompanhamento mensal/anual e cálculo de investimento (10% do líquido).
 
-Criar via migration:
+## 1. Barra de Previsão Salarial (topo do Dashboard)
 
-```sql
-CREATE TABLE public.atalhos_rapidos (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  nome text NOT NULL,              -- ex: "Eletro Centro"
-  categoria_id uuid NOT NULL,
-  pessoa_id uuid,
-  valor_padrao numeric NOT NULL DEFAULT 0, -- ex: 130
-  cor text DEFAULT '#3B82F6',
-  icone text DEFAULT 'zap',
-  ordem integer DEFAULT 0,
-  ativo boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+Card destacado no topo mostrando:
+- **Previsão do mês**: soma dos `valor_padrao` de todos os modelos recorrentes ativos do tipo receita para o mês atual
+- **Já recebido**: soma dos lançamentos de receita do mês com status `recebido`
+- Barra de progresso visual (recebido / previsão)
+- Formato: `R$ 3.200 de R$ 8.500 recebidos`
 
-ALTER TABLE public.atalhos_rapidos ENABLE ROW LEVEL SECURITY;
--- RLS: select/insert/update/delete own
-```
+Dados: usar `useLancamentos` (já existe) + `useModelosRecorrentes` (já existe) para calcular.
 
-## 2. Seed padrão no signup
+## 2. Atalhos Rápidos Renomeados
 
-Atualizar a função `seed_user_data` para inserir atalhos iniciais:
-- "Raio X" (categoria Raio X, valor 0)
-- "Eletro" (categoria Eletro, valor 130)
-- "Personal" (categoria Personal esposa, valor 0)
-- "Venda" (categoria Vendas, valor 0)
+Atualizar os atalhos padrão no seed para os nomes solicitados:
+- **Radial Dinheiro** (categoria Raio X, valor editável ao clicar)
+- **Radial Mensal** (categoria Raio X, valor fixo mensal)
+- **Eletrocardiograma** (categoria Eletro)
+- **Vendas** (categoria Vendas)
+- **Consultoria** (nova categoria de receita a criar)
 
-## 3. Hook `useAtalhosRapidos`
+Todos clicáveis para lançamento rápido (já funciona). Se valor = 0, abre form; se > 0, lança direto.
 
-Novo hook em `useFinanceData.ts` para buscar atalhos do usuário.
+**Edição rápida de valor**: ao clicar num atalho sem valor padrão (como "Radial Dinheiro"), abrir um mini-dialog/popover inline para digitar o valor e confirmar — sem ir para outra página.
 
-## 4. Dashboard — atalhos dinâmicos
+## 3. Breakdown Inteligente por Categoria
 
-- Substituir `quickActions` fixo por dados da tabela
-- Ao clicar num atalho: cria o lançamento direto (com valor padrão + regras da categoria) e mostra toast de confirmação
-- Se valor padrão for 0, redireciona para `/novo` com categoria pré-selecionada (comportamento atual)
+Nova seção "Ganhos por Fonte" abaixo dos atalhos:
+- Agrupa receitas do mês por categoria
+- Mostra para cada: nome da categoria, total bruto, total líquido, quantidade de lançamentos
+- Cards coloridos com a cor da categoria
+- Dados já disponíveis em `lancamentosMes`
 
-## 5. Tela de gerenciamento dos atalhos
+## 4. Acompanhamento Mensal e Controle Anual
 
-Nova aba "Atalhos Rápidos" na página de Configurações:
-- Lista dos atalhos com nome, categoria, valor, cor
-- Editar nome, valor padrão, categoria, pessoa
-- Adicionar novo atalho
-- Reordenar / ativar / desativar / excluir
-- Escolher cor e ícone
+Melhorar a seção existente de gráficos:
+- **Evolução Mensal**: manter o BarChart existente mas adicionar linha de meta/previsão
+- **Controle Anual**: card com totais do ano (bruto, líquido, dízimo, imposto, gasolina) — já existe, manter
 
-## Resumo do fluxo
+## 5. Card de Investimento
 
-1. Usuário abre Configurações > aba "Atalhos"
-2. Cria "Eletro Centro" com categoria Eletro, valor R$130
-3. No Dashboard, aparece o botão "Eletro Centro"
-4. Clica → lançamento criado automaticamente com R$130, descontos aplicados, toast "Lançamento criado!"
+Novo card destacado:
+- Cálculo: **10% do valor líquido do mês** (após dízimo, imposto, gasolina)
+- Mostra: `Investir: R$ X` (10% do líquido)
+- Fórmula: `resumoMes.liquido * 0.10`
+- Cor verde para destacar
+
+## Alterações Técnicas
+
+### Arquivos a modificar:
+1. **`src/pages/Dashboard.tsx`** — Reorganizar layout:
+   - Topo: Card de previsão salarial com Progress bar
+   - Atalhos rápidos com mini-dialog para editar valor ao clicar
+   - Seção "Ganhos por Fonte" (breakdown por categoria)
+   - Card de Investimento (10% do líquido)
+   - Charts existentes (mantidos)
+   - Resumo anual (mantido)
+
+2. **`src/hooks/useFinanceData.ts`** — Adicionar hook `usePrevisaoMensal` que busca modelos recorrentes ativos para calcular previsão
+
+### Banco de dados:
+- **Migration**: Adicionar categoria "Consultoria" no seed (ou o usuário cria em Configurações)
+- Não precisa de novas tabelas — tudo usa dados já existentes
+
+### Novos componentes:
+- `Dialog` para edição rápida de valor do atalho (usar o Dialog do shadcn já disponível)
 
