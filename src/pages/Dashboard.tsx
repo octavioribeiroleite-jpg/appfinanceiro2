@@ -406,12 +406,7 @@ export default function Dashboard() {
         }}
       />
 
-      {/* FAB */}
-      <Link to="/novo" className="fixed bottom-20 right-4 md:bottom-6 z-50">
-        <Button size="lg" className="h-14 w-14 rounded-full shadow-lg">
-          <Plus className="h-6 w-6" />
-        </Button>
-      </Link>
+
     </div>
   );
 }
