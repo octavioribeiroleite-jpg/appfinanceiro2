@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      atalhos_rapidos: {
+        Row: {
+          ativo: boolean
+          categoria_id: string
+          cor: string | null
+          created_at: string
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number | null
+          pessoa_id: string | null
+          user_id: string
+          valor_padrao: number
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_id: string
+          cor?: string | null
+          created_at?: string
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+          pessoa_id?: string | null
+          user_id: string
+          valor_padrao?: number
+        }
+        Update: {
+          ativo?: boolean
+          categoria_id?: string
+          cor?: string | null
+          created_at?: string
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+          pessoa_id?: string | null
+          user_id?: string
+          valor_padrao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atalhos_rapidos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atalhos_rapidos_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categorias: {
         Row: {
           ativo: boolean

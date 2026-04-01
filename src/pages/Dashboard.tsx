@@ -1,25 +1,38 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { useLancamentos, useLancamentosAno, useCategorias } from '@/hooks/useFinanceData';
+import { useState, useMemo, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useLancamentos, useLancamentosAno, useCategorias, useAtalhosRapidos } from '@/hooks/useFinanceData';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, MESES } from '@/lib/format';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   TrendingUp, TrendingDown, Church, Receipt, Fuel,
-  Wallet, ArrowUpRight, Activity, Heart, Dumbbell, ShoppingBag, Plus,
+  Wallet, ArrowUpRight, Plus, Zap, Activity, Heart, Dumbbell, ShoppingBag,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  zap: Zap, activity: Activity, heart: Heart, dumbbell: Dumbbell,
+  'shopping-bag': ShoppingBag, receipt: Receipt, fuel: Fuel, church: Church,
+};
 
 const now = new Date();
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [mes, setMes] = useState(now.getMonth() + 1);
   const [ano, setAno] = useState(now.getFullYear());
 
   const { data: lancamentosMes = [] } = useLancamentos(mes, ano);
   const { data: lancamentosAno = [] } = useLancamentosAno(ano);
-  const { data: categoriasReceita = [] } = useCategorias('receita');
+  const { data: atalhos = [] } = useAtalhosRapidos();
 
   const resumoMes = useMemo(() => {
     const receitas = lancamentosMes.filter(l => l.tipo_lancamento === 'receita');
@@ -70,12 +83,50 @@ export default function Dashboard() {
     return Object.values(cats);
   }, [lancamentosMes]);
 
-  const quickActions = [
-    { label: '+ Raio X', icon: Activity, categoria: 'Raio X', color: 'bg-blue-500' },
-    { label: '+ Eletro', icon: Heart, categoria: 'Eletro', color: 'bg-violet-500' },
-    { label: '+ Personal', icon: Dumbbell, categoria: 'Personal esposa', color: 'bg-green-500' },
-    { label: '+ Venda', icon: ShoppingBag, categoria: 'Vendas', color: 'bg-orange-500' },
-  ];
+  const handleAtalho = useCallback(async (atalho: typeof atalhos[0]) => {
+    if (!user) return;
+    if (!atalho.valor_padrao || Number(atalho.valor_padrao) === 0) {
+      navigate(`/novo?categoria_id=${atalho.categoria_id}&tipo=receita${atalho.pessoa_id ? `&pessoa_id=${atalho.pessoa_id}` : ''}`);
+      return;
+    }
+
+    // Fetch rule for this category
+    const { data: regra } = await supabase.rpc('obter_regra_categoria', {
+      p_user_id: user.id,
+      p_categoria_id: atalho.categoria_id,
+      p_pessoa_id: atalho.pessoa_id || atalho.categoria_id, // fallback
+    });
+
+    const r = regra?.[0];
+    const hoje = new Date();
+    const payload = {
+      user_id: user.id,
+      pessoa_id: atalho.pessoa_id || '',
+      categoria_id: atalho.categoria_id,
+      descricao: atalho.nome,
+      tipo_lancamento: 'receita' as const,
+      valor_bruto: Number(atalho.valor_padrao),
+      percentual_dizimo: r?.percentual_dizimo ?? 0,
+      percentual_imposto: r?.percentual_imposto ?? 0,
+      percentual_gasolina: r?.percentual_gasolina ?? 0,
+      aplicar_dizimo: r?.aplicar_dizimo ?? false,
+      aplicar_imposto: r?.aplicar_imposto ?? false,
+      aplicar_gasolina: r?.aplicar_gasolina ?? false,
+      data_prevista: hoje.toISOString().split('T')[0],
+      competencia_mes: hoje.getMonth() + 1,
+      competencia_ano: hoje.getFullYear(),
+      status: 'recebido',
+    };
+
+    const { error } = await supabase.from('lancamentos').insert(payload);
+    if (error) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['lancamentos-ano'] });
+      toast({ title: `${atalho.nome} — ${formatCurrency(Number(atalho.valor_padrao))} lançado!` });
+    }
+  }, [user, navigate, toast, queryClient]);
 
   const cards = [
     { title: 'Bruto', value: resumoMes.bruto, icon: TrendingUp, color: 'text-primary' },
@@ -93,9 +144,7 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
           <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
               {MESES.map((m, i) => (
                 <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
@@ -103,9 +152,7 @@ export default function Dashboard() {
             </SelectContent>
           </Select>
           <Select value={String(ano)} onValueChange={v => setAno(Number(v))}>
-            <SelectTrigger className="w-24">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
             <SelectContent>
               {[2024, 2025, 2026, 2027].map(a => (
                 <SelectItem key={a} value={String(a)}>{a}</SelectItem>
@@ -115,30 +162,47 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick actions */}
+      {/* Atalhos rápidos dinâmicos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {quickActions.map(action => {
-          const cat = categoriasReceita.find(c => c.nome === action.categoria);
+        {atalhos.map(atalho => {
+          const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
           return (
-            <Link
-              key={action.categoria}
-              to={cat ? `/novo?categoria_id=${cat.id}&tipo=receita` : '/novo?tipo=receita'}
+            <Button
+              key={atalho.id}
+              variant="outline"
+              className="w-full h-14 gap-2 text-sm font-medium"
+              onClick={() => handleAtalho(atalho)}
             >
-              <Button variant="outline" className="w-full h-12 gap-2 text-sm font-medium">
-                <div className={`h-6 w-6 rounded-md ${action.color} flex items-center justify-center`}>
-                  <action.icon className="h-3.5 w-3.5 text-white" />
-                </div>
-                {action.label}
-              </Button>
-            </Link>
+              <div
+                className="h-7 w-7 rounded-md flex items-center justify-center shrink-0"
+                style={{ backgroundColor: atalho.cor || '#3B82F6' }}
+              >
+                <Icon className="h-3.5 w-3.5 text-white" />
+              </div>
+              <span className="truncate">
+                {atalho.nome}
+                {Number(atalho.valor_padrao) > 0 && (
+                  <span className="block text-[10px] text-muted-foreground font-normal">
+                    {formatCurrency(Number(atalho.valor_padrao))}
+                  </span>
+                )}
+              </span>
+            </Button>
           );
         })}
+        {atalhos.length === 0 && (
+          <Link to="/configuracoes" className="col-span-2 sm:col-span-4">
+            <Button variant="outline" className="w-full h-14 gap-2 text-muted-foreground">
+              <Plus className="h-4 w-4" /> Configurar atalhos rápidos
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Cards do mês */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {cards.map(c => (
-          <Card key={c.title}>
+        {cards.map((c, i) => (
+          <Card key={c.title} className={i === cards.length - 1 ? 'col-span-2 sm:col-span-1' : ''}>
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-1">
                 <c.icon className={`h-4 w-4 ${c.color}`} />

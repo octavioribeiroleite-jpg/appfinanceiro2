@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatCurrency } from '@/lib/format';
+import { Pencil, Trash2, Plus } from 'lucide-react';
 
 export default function Configuracoes() {
   const { user } = useAuth();
@@ -20,8 +22,26 @@ export default function Configuracoes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Atalhos
+  const { data: atalhos = [] } = useQuery({
+    queryKey: ['atalhos-all', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('atalhos_rapidos')
+        .select('*, categorias(*), pessoas(*)')
+        .order('ordem');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const categoriasReceita = categorias.filter(c => c.tipo === 'receita');
+
   const [novaPessoa, setNovaPessoa] = useState({ nome: '', tipo: 'outro' });
   const [novaCategoria, setNovaCategoria] = useState({ nome: '', tipo: 'despesa', cor: '#6b7280', icone: 'circle' });
+  const [novoAtalho, setNovoAtalho] = useState({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
+  const [editAtalhoId, setEditAtalhoId] = useState<string | null>(null);
 
   const handleAddPessoa = async () => {
     if (!user || !novaPessoa.nome) return;
@@ -45,6 +65,61 @@ export default function Configuracoes() {
     }
   };
 
+  const handleSaveAtalho = async () => {
+    if (!user || !novoAtalho.nome || !novoAtalho.categoria_id) return;
+    const payload = {
+      user_id: user.id,
+      nome: novoAtalho.nome,
+      categoria_id: novoAtalho.categoria_id,
+      pessoa_id: novoAtalho.pessoa_id || null,
+      valor_padrao: novoAtalho.valor_padrao,
+      cor: novoAtalho.cor,
+      icone: novoAtalho.icone,
+      ordem: atalhos.length,
+    };
+
+    let error;
+    if (editAtalhoId) {
+      ({ error } = await supabase.from('atalhos_rapidos').update(payload).eq('id', editAtalhoId));
+    } else {
+      ({ error } = await supabase.from('atalhos_rapidos').insert(payload));
+    }
+
+    if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    else {
+      queryClient.invalidateQueries({ queryKey: ['atalhos'] });
+      queryClient.invalidateQueries({ queryKey: ['atalhos-all'] });
+      setNovoAtalho({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
+      setEditAtalhoId(null);
+      toast({ title: editAtalhoId ? 'Atalho atualizado!' : 'Atalho adicionado!' });
+    }
+  };
+
+  const startEditAtalho = (a: typeof atalhos[0]) => {
+    setEditAtalhoId(a.id);
+    setNovoAtalho({
+      nome: a.nome,
+      categoria_id: a.categoria_id,
+      pessoa_id: a.pessoa_id || '',
+      valor_padrao: Number(a.valor_padrao),
+      cor: a.cor || '#3B82F6',
+      icone: a.icone || 'zap',
+    });
+  };
+
+  const deleteAtalho = async (id: string) => {
+    await supabase.from('atalhos_rapidos').delete().eq('id', id);
+    queryClient.invalidateQueries({ queryKey: ['atalhos'] });
+    queryClient.invalidateQueries({ queryKey: ['atalhos-all'] });
+    toast({ title: 'Atalho removido' });
+  };
+
+  const toggleAtalho = async (id: string, ativo: boolean) => {
+    await supabase.from('atalhos_rapidos').update({ ativo: !ativo }).eq('id', id);
+    queryClient.invalidateQueries({ queryKey: ['atalhos'] });
+    queryClient.invalidateQueries({ queryKey: ['atalhos-all'] });
+  };
+
   const togglePessoa = async (id: string, ativo: boolean) => {
     await supabase.from('pessoas').update({ ativo: !ativo }).eq('id', id);
     queryClient.invalidateQueries({ queryKey: ['pessoas'] });
@@ -55,16 +130,141 @@ export default function Configuracoes() {
     queryClient.invalidateQueries({ queryKey: ['categorias'] });
   };
 
+  const ICONES = [
+    { value: 'zap', label: '⚡ Zap' },
+    { value: 'activity', label: '📊 Activity' },
+    { value: 'heart', label: '❤️ Heart' },
+    { value: 'dumbbell', label: '💪 Dumbbell' },
+    { value: 'shopping-bag', label: '🛍️ Shopping' },
+    { value: 'receipt', label: '🧾 Receipt' },
+    { value: 'fuel', label: '⛽ Fuel' },
+    { value: 'church', label: '⛪ Church' },
+  ];
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Configurações</h1>
 
-      <Tabs defaultValue="pessoas">
-        <TabsList className="w-full grid grid-cols-2">
+      <Tabs defaultValue="atalhos">
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="atalhos">Atalhos</TabsTrigger>
           <TabsTrigger value="pessoas">Pessoas</TabsTrigger>
           <TabsTrigger value="categorias">Categorias</TabsTrigger>
         </TabsList>
 
+        {/* ATALHOS TAB */}
+        <TabsContent value="atalhos" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">{editAtalhoId ? 'Editar Atalho' : 'Novo Atalho Rápido'}</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <Label>Nome</Label>
+                <Input
+                  placeholder="Ex: Eletro Centro"
+                  value={novoAtalho.nome}
+                  onChange={e => setNovoAtalho(f => ({ ...f, nome: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Categoria</Label>
+                <Select value={novoAtalho.categoria_id} onValueChange={v => setNovoAtalho(f => ({ ...f, categoria_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {categoriasReceita.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Pessoa (opcional)</Label>
+                <Select value={novoAtalho.pessoa_id} onValueChange={v => setNovoAtalho(f => ({ ...f, pessoa_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {pessoas.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Valor Padrão (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0 = preencher manual"
+                    value={novoAtalho.valor_padrao || ''}
+                    onChange={e => setNovoAtalho(f => ({ ...f, valor_padrao: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cor</Label>
+                  <Input type="color" value={novoAtalho.cor} onChange={e => setNovoAtalho(f => ({ ...f, cor: e.target.value }))} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Ícone</Label>
+                <Select value={novoAtalho.icone} onValueChange={v => setNovoAtalho(f => ({ ...f, icone: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ICONES.map(i => (
+                      <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleSaveAtalho} className="flex-1">
+                  {editAtalhoId ? 'Salvar' : 'Adicionar'}
+                </Button>
+                {editAtalhoId && (
+                  <Button variant="outline" onClick={() => {
+                    setEditAtalhoId(null);
+                    setNovoAtalho({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
+                  }}>
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-2">
+            {atalhos.map(a => (
+              <Card key={a.id}>
+                <CardContent className="p-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="h-8 w-8 rounded-md shrink-0 flex items-center justify-center" style={{ backgroundColor: a.cor || '#3B82F6' }}>
+                      <span className="text-white text-xs">⚡</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{a.nome}</p>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="outline" className="text-[10px]">{a.categorias?.nome}</Badge>
+                        {Number(a.valor_padrao) > 0 && (
+                          <span className="text-[10px] text-muted-foreground">{formatCurrency(Number(a.valor_padrao))}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEditAtalho(a)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteAtalho(a.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Switch checked={a.ativo} onCheckedChange={() => toggleAtalho(a.id, a.ativo)} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* PESSOAS TAB */}
         <TabsContent value="pessoas" className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-base">Nova Pessoa</CardTitle></CardHeader>
@@ -103,6 +303,7 @@ export default function Configuracoes() {
           </div>
         </TabsContent>
 
+        {/* CATEGORIAS TAB */}
         <TabsContent value="categorias" className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-base">Nova Categoria</CardTitle></CardHeader>
