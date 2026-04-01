@@ -224,29 +224,29 @@ export default function Dashboard() {
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground">Atalhos Rápidos</h2>
         {atalhos.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {atalhos.map(atalho => (
-              <Button
+              <Card
                 key={atalho.id}
-                variant="outline"
-                className="w-full h-14 text-xs font-medium justify-start px-2 gap-2"
+                className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setDialogAtalho(atalho)}
               >
-                <div
-                  className="h-8 w-8 rounded-md flex items-center justify-center shrink-0 text-base text-white"
-                  style={{ backgroundColor: atalho.cor || '#3B82F6' }}
-                >
-                  {EMOJI_MAP[atalho.icone || ''] || atalho.icone || '⚡'}
-                </div>
-                <span className="truncate text-left">
-                  <span className="block truncate">{atalho.nome}</span>
-                  {Number(atalho.valor_padrao) > 0 && (
-                    <span className="block text-[10px] text-muted-foreground font-normal">
-                      {formatCurrency(Number(atalho.valor_padrao))}
-                    </span>
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div
+                      className="h-3 w-3 rounded-full shrink-0"
+                      style={{ backgroundColor: atalho.cor || '#3B82F6' }}
+                    />
+                    <span className="text-sm font-semibold truncate">{atalho.nome}</span>
+                  </div>
+                  {(atalho as any).descricao && (
+                    <p className="text-xs text-muted-foreground mb-1 line-clamp-2">{(atalho as any).descricao}</p>
                   )}
-                </span>
-              </Button>
+                  {Number(atalho.valor_padrao) > 0 && (
+                    <p className="text-base font-bold text-primary">{formatCurrency(Number(atalho.valor_padrao))}</p>
+                  )}
+                </CardContent>
+              </Card>
             ))}
           </div>
         ) : (
