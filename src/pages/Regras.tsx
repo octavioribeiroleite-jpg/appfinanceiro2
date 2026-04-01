@@ -292,6 +292,16 @@ export default function Regras() {
                       <Label>Nome</Label>
                       <Input value={form.nome_categoria || ''} onChange={e => setForm((f: any) => ({ ...f, nome_categoria: e.target.value }))} />
                     </div>
+                    <div className="space-y-2">
+                      <Label>Pessoa</Label>
+                      <Select value={form.pessoa_id || ''} onValueChange={v => setForm((f: any) => ({ ...f, pessoa_id: v === 'global' ? null : v }))}>
+                        <SelectTrigger><SelectValue placeholder="Global" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="global">Global</SelectItem>
+                          {pessoas.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="grid grid-cols-3 gap-3">
                       {['dizimo', 'imposto', 'gasolina'].map(key => (
                         <div key={key} className="space-y-2">
