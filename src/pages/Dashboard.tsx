@@ -50,11 +50,19 @@ export default function Dashboard() {
       .reduce((s, m) => s + Number(m.valor_padrao), 0);
   }, [modelos]);
 
-  const recebido = useMemo(() => {
+  const recebidoRecorrente = useMemo(() => {
     return lancamentosMes
-      .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido')
+      .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido' && l.modelo_id)
       .reduce((s, l) => s + Number(l.valor_bruto), 0);
   }, [lancamentosMes]);
+
+  const avulsos = useMemo(() => {
+    return lancamentosMes
+      .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido' && !l.modelo_id)
+      .reduce((s, l) => s + Number(l.valor_bruto), 0);
+  }, [lancamentosMes]);
+
+  const recebido = recebidoRecorrente + avulsos;
 
   // Agrupar atalhos por categoria
   const atalhosAgrupados = useMemo(() => {
@@ -218,7 +226,7 @@ export default function Dashboard() {
       </div>
 
       {/* 1. Previsão Salarial */}
-      <SalaryForecast previsao={previsao} recebido={recebido} />
+      <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} />
 
       {/* 2. Atalhos Rápidos — botões individuais para lançamento rápido */}
       <div className="space-y-2">
