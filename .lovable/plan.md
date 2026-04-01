@@ -1,48 +1,30 @@
 
 
-# Caixinhas por Categoria nos Relatórios
+# Atualizar lançamentos existentes ao salvar regras
 
-## Mudança
-Apenas no arquivo `src/pages/Relatorios.tsx`, dentro do componente `PessoaReport`:
+## Problema
+Quando o usuário altera as porcentagens de dízimo/imposto/gasolina nas Regras, os lançamentos existentes ficam com os valores antigos. Precisa recalcular todos automaticamente.
 
-**Substituir** a tabela "Detalhamento por Categoria" (linhas 138-184) e a tabela "Lançamentos Detalhados" (linhas 186-219) por **cards individuais colapsáveis** para cada categoria.
+## Solução
 
-## Novo layout (após Dízimo do Mês)
+Modificar **`src/pages/Regras.tsx`** — na função `handleSave`, após salvar a regra com sucesso:
 
+1. Buscar todos os lançamentos de receita que usam a mesma `categoria_id` (e `pessoa_id` se aplicável)
+2. Para cada lançamento, recalcular `valor_dizimo`, `valor_imposto`, `valor_gasolina` e `valor_liquido` com as novas porcentagens
+3. Fazer um update em batch de todos os lançamentos afetados
+4. Invalidar queries de lançamentos para atualizar a UI
+5. Mostrar toast informando quantos lançamentos foram atualizados
+
+### Lógica de recálculo por lançamento:
 ```text
-── Fontes de Renda ──────────────────
-
-┌─ Raio X Dinheiro ──────────────────┐
-│ ● cor   Bruto: R$ 2.400           │
-│ Dízimo: R$ 240 · Imposto: R$ 168  │
-│ Gasolina: R$ 240                   │
-│ Líquido: R$ 1.752                  │
-│ 10 lançamentos · 6 recebidos      │
-│ ▼ (clica para expandir)           │
-│  ┌─ Fulano 1 - R$ 240 ✅ ─────┐  │
-│  ├─ Fulano 2 - R$ 240 ⏳ ─────┤  │
-│  └─ ...                        ┘  │
-└────────────────────────────────────┘
-
-┌─ Eletro ───────────────────────────┐
-│ (mesma estrutura)                  │
-└────────────────────────────────────┘
+valor_dizimo = aplicar_dizimo ? valor_bruto * percentual_dizimo / 100 : 0
+valor_imposto = aplicar_imposto ? valor_bruto * percentual_imposto / 100 : 0
+valor_gasolina = aplicar_gasolina ? valor_bruto * percentual_gasolina / 100 : 0
+valor_liquido = valor_bruto - valor_dizimo - valor_imposto - valor_gasolina
 ```
 
-## Implementacao
+Também atualizar os campos `percentual_*` e `aplicar_*` em cada lançamento para refletir a regra atual.
 
-No `PessoaReport`, alterar o agrupamento `porCategoria` para incluir tambem:
-- `total` (count de lancamentos)
-- `recebidos` (count com status recebido)
-- `lancamentos[]` (array dos lancamentos daquela categoria)
-
-Substituir as duas secoes (tabela categoria + tabela lancamentos) por um `map` sobre as categorias, renderizando cada uma como um `Card` com `Collapsible`:
-- Header do card: nome com bolinha de cor, bruto e liquido em destaque
-- Corpo visivel: dizimo, imposto, gasolina em texto secundario + contagem
-- Conteudo colapsavel: lista dos lancamentos individuais com descricao, valor e badge de status
-
-Importar `Collapsible, CollapsibleTrigger, CollapsibleContent` de `@/components/ui/collapsible` e `ChevronDown` de lucide-react.
-
-## Arquivo unico a modificar
-- `src/pages/Relatorios.tsx`
+## Arquivo a modificar
+- **`src/pages/Regras.tsx`** — Expandir `handleSave` para recalcular e atualizar lançamentos existentes
 
