@@ -266,16 +266,17 @@ export default function Regras() {
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => {
                       if (editing === r.id) { setEditing(null); } else {
-                        setEditing(r.id);
-                        setForm({
-                          nome_categoria: r.categorias?.nome || '',
-                          percentual_dizimo: r.percentual_dizimo,
-                          percentual_imposto: r.percentual_imposto,
-                          percentual_gasolina: r.percentual_gasolina,
-                          aplicar_dizimo: r.aplicar_dizimo,
-                          aplicar_imposto: r.aplicar_imposto,
-                          aplicar_gasolina: r.aplicar_gasolina,
-                        });
+                      setEditing(r.id);
+                      setForm({
+                        nome_categoria: r.categorias?.nome || '',
+                        pessoa_id: r.pessoa_id || '',
+                        percentual_dizimo: r.percentual_dizimo,
+                        percentual_imposto: r.percentual_imposto,
+                        percentual_gasolina: r.percentual_gasolina,
+                        aplicar_dizimo: r.aplicar_dizimo,
+                        aplicar_imposto: r.aplicar_imposto,
+                        aplicar_gasolina: r.aplicar_gasolina,
+                      });
                       }
                     }}>
                       {editing === r.id ? 'Cancelar' : 'Editar'}
@@ -290,6 +291,16 @@ export default function Regras() {
                     <div className="space-y-2">
                       <Label>Nome</Label>
                       <Input value={form.nome_categoria || ''} onChange={e => setForm((f: any) => ({ ...f, nome_categoria: e.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Pessoa</Label>
+                      <Select value={form.pessoa_id || ''} onValueChange={v => setForm((f: any) => ({ ...f, pessoa_id: v === 'global' ? null : v }))}>
+                        <SelectTrigger><SelectValue placeholder="Global" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="global">Global</SelectItem>
+                          {pessoas.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       {['dizimo', 'imposto', 'gasolina'].map(key => (
