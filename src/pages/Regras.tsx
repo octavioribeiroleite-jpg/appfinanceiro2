@@ -33,11 +33,21 @@ export default function Regras() {
     aplicar_gasolina: true,
   });
 
-  const handleSave = async (id: string) => {
-    const { error } = await supabase.from('regras_categoria').update(form).eq('id', id);
+  const handleSave = async (id: string, categoriaId?: string) => {
+    // Update category name if changed
+    if (form.nome_categoria && categoriaId) {
+      const { error: catError } = await supabase.from('categorias').update({ nome: form.nome_categoria }).eq('id', categoriaId);
+      if (catError) {
+        toast({ title: 'Erro ao salvar nome', description: catError.message, variant: 'destructive' });
+        return;
+      }
+    }
+    const { nome_categoria, ...regraFields } = form;
+    const { error } = await supabase.from('regras_categoria').update(regraFields).eq('id', id);
     if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     else {
       queryClient.invalidateQueries({ queryKey: ['regras'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias'] });
       setEditing(null);
       toast({ title: 'Salvo!' });
     }
