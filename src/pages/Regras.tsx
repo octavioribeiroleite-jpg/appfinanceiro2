@@ -263,22 +263,27 @@ export default function Regras() {
                     {r.pessoas && <span className="text-xs text-muted-foreground ml-2">({r.pessoas.nome})</span>}
                     {!r.pessoas && <span className="text-xs text-muted-foreground ml-2">(Global)</span>}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => {
-                    if (editing === r.id) { setEditing(null); } else {
-                      setEditing(r.id);
-                      setForm({
-                        nome_categoria: r.categorias?.nome || '',
-                        percentual_dizimo: r.percentual_dizimo,
-                        percentual_imposto: r.percentual_imposto,
-                        percentual_gasolina: r.percentual_gasolina,
-                        aplicar_dizimo: r.aplicar_dizimo,
-                        aplicar_imposto: r.aplicar_imposto,
-                        aplicar_gasolina: r.aplicar_gasolina,
-                      });
-                    }
-                  }}>
-                    {editing === r.id ? 'Cancelar' : 'Editar'}
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      if (editing === r.id) { setEditing(null); } else {
+                        setEditing(r.id);
+                        setForm({
+                          nome_categoria: r.categorias?.nome || '',
+                          percentual_dizimo: r.percentual_dizimo,
+                          percentual_imposto: r.percentual_imposto,
+                          percentual_gasolina: r.percentual_gasolina,
+                          aplicar_dizimo: r.aplicar_dizimo,
+                          aplicar_imposto: r.aplicar_imposto,
+                          aplicar_gasolina: r.aplicar_gasolina,
+                        });
+                      }
+                    }}>
+                      {editing === r.id ? 'Cancelar' : 'Editar'}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(r.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 {editing === r.id ? (
                   <div className="space-y-3">
