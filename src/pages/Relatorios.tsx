@@ -43,16 +43,19 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
   const progressoPct = totalPrevisto > 0 ? Math.round((recebido / totalPrevisto) * 100) : 0;
 
   // Por categoria
-  const porCategoria: Record<string, { nome: string; bruto: number; liquido: number; dizimo: number; imposto: number; gasolina: number; cor: string }> = {};
+  const porCategoria: Record<string, { nome: string; bruto: number; liquido: number; dizimo: number; imposto: number; gasolina: number; cor: string; total: number; recebidos: number; lancamentos: any[] }> = {};
   receitas.forEach(l => {
     const cat = l.categorias;
     if (!cat) return;
-    if (!porCategoria[l.categoria_id]) porCategoria[l.categoria_id] = { nome: cat.nome, bruto: 0, liquido: 0, dizimo: 0, imposto: 0, gasolina: 0, cor: cat.cor || '#888' };
+    if (!porCategoria[l.categoria_id]) porCategoria[l.categoria_id] = { nome: cat.nome, bruto: 0, liquido: 0, dizimo: 0, imposto: 0, gasolina: 0, cor: cat.cor || '#888', total: 0, recebidos: 0, lancamentos: [] };
     porCategoria[l.categoria_id].bruto += Number(l.valor_bruto);
     porCategoria[l.categoria_id].liquido += Number(l.valor_liquido);
     porCategoria[l.categoria_id].dizimo += Number(l.valor_dizimo);
     porCategoria[l.categoria_id].imposto += Number(l.valor_imposto);
     porCategoria[l.categoria_id].gasolina += Number(l.valor_gasolina);
+    porCategoria[l.categoria_id].total += 1;
+    if (l.status === 'recebido') porCategoria[l.categoria_id].recebidos += 1;
+    porCategoria[l.categoria_id].lancamentos.push(l);
   });
   const cats = Object.values(porCategoria);
 
