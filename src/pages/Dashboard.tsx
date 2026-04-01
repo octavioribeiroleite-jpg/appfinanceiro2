@@ -120,6 +120,15 @@ export default function Dashboard() {
     } catch {}
 
     const hoje = new Date();
+    const { valorDizimo, valorImposto, valorGasolina, valorLiquido } = calcularDescontos(
+      valor,
+      r?.percentual_dizimo ?? 0,
+      r?.percentual_imposto ?? 0,
+      r?.percentual_gasolina ?? 0,
+      r?.aplicar_dizimo ?? false,
+      r?.aplicar_imposto ?? false,
+      r?.aplicar_gasolina ?? false,
+    );
     const payload = {
       user_id: user.id,
       pessoa_id: atalho.pessoa_id || atalho.categoria_id,
@@ -127,6 +136,10 @@ export default function Dashboard() {
       descricao: atalho.nome,
       tipo_lancamento: 'receita' as const,
       valor_bruto: valor,
+      valor_dizimo: valorDizimo,
+      valor_imposto: valorImposto,
+      valor_gasolina: valorGasolina,
+      valor_liquido: valorLiquido,
       percentual_dizimo: r?.percentual_dizimo ?? 0,
       percentual_imposto: r?.percentual_imposto ?? 0,
       percentual_gasolina: r?.percentual_gasolina ?? 0,
