@@ -100,7 +100,7 @@ export default function Configuracoes() {
 
   const startEditAtalho = (a: typeof atalhos[0]) => {
     setEditAtalhoId(a.id);
-    setNovoAtalho({
+    setEditForm({
       nome: a.nome,
       categoria_id: a.categoria_id,
       pessoa_id: a.pessoa_id || '',
@@ -108,6 +108,27 @@ export default function Configuracoes() {
       cor: a.cor || '#3B82F6',
       icone: a.icone || 'zap',
     });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!user || !editAtalhoId || !editForm.nome || !editForm.categoria_id) return;
+    const { error } = await supabase.from('atalhos_rapidos').update({
+      nome: editForm.nome,
+      categoria_id: editForm.categoria_id,
+      pessoa_id: editForm.pessoa_id || null,
+      valor_padrao: editForm.valor_padrao,
+      cor: editForm.cor,
+      icone: editForm.icone,
+    }).eq('id', editAtalhoId);
+    if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    else {
+      queryClient.invalidateQueries({ queryKey: ['atalhos'] });
+      queryClient.invalidateQueries({ queryKey: ['atalhos-all'] });
+      setEditDialogOpen(false);
+      setEditAtalhoId(null);
+      toast({ title: 'Atalho atualizado!' });
+    }
   };
 
   const deleteAtalho = async (id: string) => {
