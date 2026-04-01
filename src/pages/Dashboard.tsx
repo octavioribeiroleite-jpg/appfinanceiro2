@@ -148,13 +148,8 @@ export default function Dashboard() {
 
   const handleAtalho = useCallback((atalho: typeof atalhos[0]) => {
     if (!user) return;
-    if (!atalho.valor_padrao || Number(atalho.valor_padrao) === 0) {
-      // Open dialog to enter value
-      setDialogAtalho(atalho);
-      return;
-    }
-    launchEntry(atalho);
-  }, [user, launchEntry]);
+    setDialogAtalho(atalho);
+  }, [user]);
 
   const cards = [
     { title: 'Bruto', value: resumoMes.bruto, icon: TrendingUp, color: 'text-primary' },
@@ -221,32 +216,32 @@ export default function Dashboard() {
               />
               <h3 className="text-sm font-semibold">{catNome}</h3>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {items.map(atalho => {
                 const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
-                return (
-                  <Button
-                    key={atalho.id}
-                    variant="outline"
-                    className="w-full h-14 gap-2 text-sm font-medium"
-                    onClick={() => handleAtalho(atalho)}
-                  >
-                    <div
-                      className="h-7 w-7 rounded-md flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: atalho.cor || '#3B82F6' }}
+                  return (
+                    <Button
+                      key={atalho.id}
+                      variant="outline"
+                      className="w-full h-16 gap-2 text-xs font-medium justify-start px-2"
+                      onClick={() => handleAtalho(atalho)}
                     >
-                      <Icon className="h-3.5 w-3.5 text-white" />
-                    </div>
-                    <span className="truncate">
-                      {atalho.nome}
-                      {Number(atalho.valor_padrao) > 0 && (
-                        <span className="block text-[10px] text-muted-foreground font-normal">
-                          {formatCurrency(Number(atalho.valor_padrao))}
-                        </span>
-                      )}
-                    </span>
-                  </Button>
-                );
+                      <div
+                        className="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: atalho.cor || '#3B82F6' }}
+                      >
+                        <Icon className="h-4 w-4 text-white" />
+                      </div>
+                      <span className="truncate text-left">
+                        <span className="block truncate">{atalho.nome}</span>
+                        {Number(atalho.valor_padrao) > 0 && (
+                          <span className="block text-[10px] text-muted-foreground font-normal">
+                            {formatCurrency(Number(atalho.valor_padrao))}
+                          </span>
+                        )}
+                      </span>
+                    </Button>
+                  );
               })}
             </div>
           </div>
@@ -344,8 +339,14 @@ export default function Dashboard() {
         open={!!dialogAtalho}
         onOpenChange={open => !open && setDialogAtalho(null)}
         nome={dialogAtalho?.nome || ''}
+        valorPadrao={Number(dialogAtalho?.valor_padrao) || 0}
+        categoriaNome={dialogAtalho?.categorias?.nome}
+        categoriaCor={dialogAtalho?.categorias?.cor || dialogAtalho?.cor || undefined}
         onConfirm={valor => {
           if (dialogAtalho) launchEntry(dialogAtalho, valor);
+        }}
+        onEditRecorrencia={() => {
+          navigate('/configuracoes');
         }}
       />
 
