@@ -1,27 +1,42 @@
 
 
-# Melhorar formulário de atalho rápido — categoria visível e agrupada
+# Adicionar alunos da Cíntia como renda recorrente
 
-## Problema atual
-O formulário de criar atalho já tem o campo de Categoria, mas o fluxo não fica claro visualmente. O usuário quer: digitar o nome, o valor, e ver claramente **para qual setor/categoria** o dinheiro vai (Raio X, Eletro, Consultoria, etc.), para que o app contabilize corretamente por fonte de renda.
+## Situação atual
+O app **já tem consolidação automática** de pagamentos recorrentes. A página "Recorrências" permite criar modelos que geram lançamentos automáticos todo mês via a função `gerar_recorrencias_mensais`. Ou seja, ao cadastrar cada aluno como modelo recorrente, o sistema já cria os lançamentos automaticamente a cada mês.
 
 ## O que será feito
 
-### 1. Melhorar o formulário de criação de atalho (`Configuracoes.tsx`)
-- Reorganizar a ordem dos campos: **Nome → Valor → Categoria** (categoria mais destacada, com cor da categoria visível)
-- Mostrar as categorias de receita como **botões coloridos** em vez de um Select dropdown — mais visual e rápido de escolher
-- Cada botão mostra a cor da categoria + nome (ex: 🔵 Raio X, 🟣 Eletro, 🟢 Personal, 🟠 Vendas, 🔷 Consultoria)
-- Traduzir os ícones para emojis em português (💉 Radial, ❤️ Eletro, 📊 Vendas, 💼 Consultoria, 💰 Dinheiro, 🚗 Gasolina, ⛪ Igreja, ⭐ Outros)
+### 1. Inserir 12 modelos recorrentes (via insert no banco)
+Cada aluno será cadastrado como modelo recorrente vinculado à categoria **Personal esposa** e pessoa **Esposa**:
 
-### 2. Agrupar atalhos por categoria na lista
-- Na lista de atalhos existentes, agrupar por categoria com título colorido
-- Facilita ver quantos atalhos cada setor tem
+| Aluno | Valor |
+|-------|-------|
+| Bento | R$ 400 |
+| Mayara | R$ 560 |
+| Hiany | R$ 720 |
+| Patricia | R$ 720 |
+| Morada | R$ 500 |
+| Laura | R$ 720 |
+| Irleis | R$ 400 |
+| Casal | R$ 1.600 |
+| João | R$ 500 |
+| Thiago | R$ 840 |
+| Amanda | R$ 1.200 |
+| Dupla Boulevard | R$ 550 |
 
-### 3. Dashboard — agrupar atalhos por categoria
-- No Dashboard, agrupar os botões de atalho rápido por categoria com título do setor
-- Botão "+ Novo" em cada grupo para adicionar atalho direto naquela categoria
+Configuração: tipo `receita`, recorrência `mensal`, modo valor `editavel` (para poder ajustar se necessário), gerar automaticamente = `true`.
 
-## Arquivos a modificar
-1. **`src/pages/Configuracoes.tsx`** — Reorganizar formulário, botões de categoria coloridos, emojis nos ícones, lista agrupada
-2. **`src/pages/Dashboard.tsx`** — Agrupar atalhos por `categoria_id` com títulos de setor
+### 2. Criar atalhos rápidos para cada aluno
+Para aparecerem no Dashboard agrupados sob "Personal esposa", cada aluno também terá um atalho rápido com o valor padrão.
+
+### 3. O que já funciona (não precisa mexer)
+- **Consolidação automática**: O botão "Gerar Recorrências" na página Recorrências já chama `gerar_recorrencias_mensais` que cria os lançamentos do mês
+- **Edição/exclusão**: A página Recorrências já permite ativar/desativar modelos
+- **Previsão salarial**: O Dashboard já soma os modelos ativos na previsão
+
+## Execução técnica
+- Buscar os IDs da categoria "Personal esposa" e pessoa "Esposa" do usuário logado
+- Inserir os 12 registros em `modelos_recorrentes` e `atalhos_rapidos` via insert SQL
+- Nenhuma alteração de código necessária — apenas dados
 
