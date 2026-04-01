@@ -390,6 +390,85 @@ export default function Configuracoes() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de edição */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Editar Atalho</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input
+                value={editForm.nome}
+                onChange={e => setEditForm(f => ({ ...f, nome: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Valor Padrão (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={editForm.valor_padrao || ''}
+                onChange={e => setEditForm(f => ({ ...f, valor_padrao: parseFloat(e.target.value) || 0 }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Categoria (setor)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {categoriasReceita.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setEditForm(f => ({ ...f, categoria_id: c.id }))}
+                    className={`flex items-center gap-2 rounded-lg border-2 p-2.5 text-sm font-medium transition-all ${
+                      editForm.categoria_id === c.id
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary'
+                        : 'border-border hover:border-muted-foreground'
+                    }`}
+                  >
+                    <div className="h-5 w-5 rounded-full shrink-0" style={{ backgroundColor: c.cor || '#888' }} />
+                    <span className="truncate">{c.nome}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Pessoa (opcional)</Label>
+              <Select value={editForm.pessoa_id} onValueChange={v => setEditForm(f => ({ ...f, pessoa_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {pessoas.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Cor</Label>
+                <Input type="color" value={editForm.cor} onChange={e => setEditForm(f => ({ ...f, cor: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Ícone</Label>
+                <Select value={editForm.icone} onValueChange={v => setEditForm(f => ({ ...f, icone: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ICONES.map(i => (
+                      <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditSave} className="w-full">Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
