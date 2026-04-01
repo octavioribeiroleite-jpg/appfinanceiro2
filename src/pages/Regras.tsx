@@ -33,11 +33,21 @@ export default function Regras() {
     aplicar_gasolina: true,
   });
 
-  const handleSave = async (id: string) => {
-    const { error } = await supabase.from('regras_categoria').update(form).eq('id', id);
+  const handleSave = async (id: string, categoriaId?: string) => {
+    // Update category name if changed
+    if (form.nome_categoria && categoriaId) {
+      const { error: catError } = await supabase.from('categorias').update({ nome: form.nome_categoria }).eq('id', categoriaId);
+      if (catError) {
+        toast({ title: 'Erro ao salvar nome', description: catError.message, variant: 'destructive' });
+        return;
+      }
+    }
+    const { nome_categoria, ...regraFields } = form;
+    const { error } = await supabase.from('regras_categoria').update(regraFields).eq('id', id);
     if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     else {
       queryClient.invalidateQueries({ queryKey: ['regras'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias'] });
       setEditing(null);
       toast({ title: 'Salvo!' });
     }
@@ -146,6 +156,7 @@ export default function Regras() {
                     if (editing === r.id) { setEditing(null); } else {
                       setEditing(r.id);
                       setForm({
+                        nome_categoria: r.categorias?.nome || '',
                         percentual_dizimo: r.percentual_dizimo,
                         percentual_imposto: r.percentual_imposto,
                         percentual_gasolina: r.percentual_gasolina,
@@ -160,6 +171,10 @@ export default function Regras() {
                 </div>
                 {editing === r.id ? (
                   <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Nome</Label>
+                      <Input value={form.nome_categoria || ''} onChange={e => setForm((f: any) => ({ ...f, nome_categoria: e.target.value }))} />
+                    </div>
                     <div className="grid grid-cols-3 gap-3">
                       {['dizimo', 'imposto', 'gasolina'].map(key => (
                         <div key={key} className="space-y-2">
@@ -167,11 +182,19 @@ export default function Regras() {
                             <Switch checked={form[`aplicar_${key}`]} onCheckedChange={v => setForm((f: any) => ({ ...f, [`aplicar_${key}`]: v }))} />
                             <span className="text-xs capitalize">{key}</span>
                           </div>
-                          <Input type="number" step="0.1" value={form[`percentual_${key}`]} onChange={e => setForm((f: any) => ({ ...f, [`percentual_${key}`]: parseFloat(e.target.value) || 0 }))} />
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={form[`percentual_${key}`] ?? ''}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setForm((f: any) => ({ ...f, [`percentual_${key}`]: val === '' ? 0 : parseFloat(val) }));
+                            }}
+                          />
                         </div>
                       ))}
                     </div>
-                    <Button size="sm" onClick={() => handleSave(r.id)}>Salvar</Button>
+                    <Button size="sm" onClick={() => handleSave(r.id, r.categoria_id)}>Salvar</Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2 text-sm">
