@@ -44,13 +44,65 @@ export default function Regras() {
     }
     const { nome_categoria, ...regraFields } = form;
     const { error } = await supabase.from('regras_categoria').update(regraFields).eq('id', id);
-    if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
-    else {
-      queryClient.invalidateQueries({ queryKey: ['regras'] });
-      queryClient.invalidateQueries({ queryKey: ['categorias'] });
-      setEditing(null);
+    if (error) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    // Recalculate all lancamentos with this categoria_id
+    if (categoriaId) {
+      let query = supabase
+        .from('lancamentos')
+        .select('id, valor_bruto')
+        .eq('categoria_id', categoriaId)
+        .eq('tipo_lancamento', 'receita');
+
+      // Find the regra to check if it's pessoa-specific
+      const regra = regras.find((r: any) => r.id === id);
+      if (regra?.pessoa_id) {
+        query = query.eq('pessoa_id', regra.pessoa_id);
+      }
+
+      const { data: lancs } = await query;
+      if (lancs && lancs.length > 0) {
+        const pDizimo = regraFields.percentual_dizimo ?? form.percentual_dizimo;
+        const pImposto = regraFields.percentual_imposto ?? form.percentual_imposto;
+        const pGasolina = regraFields.percentual_gasolina ?? form.percentual_gasolina;
+        const aDizimo = regraFields.aplicar_dizimo ?? form.aplicar_dizimo;
+        const aImposto = regraFields.aplicar_imposto ?? form.aplicar_imposto;
+        const aGasolina = regraFields.aplicar_gasolina ?? form.aplicar_gasolina;
+
+        const updates = lancs.map((l: any) => {
+          const vd = aDizimo ? Math.round(l.valor_bruto * pDizimo) / 100 : 0;
+          const vi = aImposto ? Math.round(l.valor_bruto * pImposto) / 100 : 0;
+          const vg = aGasolina ? Math.round(l.valor_bruto * pGasolina) / 100 : 0;
+          return supabase.from('lancamentos').update({
+            percentual_dizimo: pDizimo,
+            percentual_imposto: pImposto,
+            percentual_gasolina: pGasolina,
+            aplicar_dizimo: aDizimo,
+            aplicar_imposto: aImposto,
+            aplicar_gasolina: aGasolina,
+            valor_dizimo: vd,
+            valor_imposto: vi,
+            valor_gasolina: vg,
+            valor_liquido: l.valor_bruto - vd - vi - vg,
+          }).eq('id', l.id);
+        });
+        await Promise.all(updates);
+        toast({ title: 'Salvo!', description: `${lancs.length} lançamento(s) recalculado(s)` });
+      } else {
+        toast({ title: 'Salvo!' });
+      }
+    } else {
       toast({ title: 'Salvo!' });
     }
+
+    queryClient.invalidateQueries({ queryKey: ['regras'] });
+    queryClient.invalidateQueries({ queryKey: ['categorias'] });
+    queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
+    queryClient.invalidateQueries({ queryKey: ['lancamentos-ano'] });
+    setEditing(null);
   };
 
   const handleCreate = async () => {
