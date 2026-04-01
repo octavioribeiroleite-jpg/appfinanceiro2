@@ -113,7 +113,7 @@ export default function Dashboard() {
       p_user_id: user.id,
       p_categoria_id: atalho.categoria_id,
       p_pessoa_id: atalho.pessoa_id || atalho.categoria_id,
-    });
+    }).catch(() => ({ data: null }));
 
     const r = regra?.[0];
     const hoje = new Date();
