@@ -50,11 +50,19 @@ export default function Dashboard() {
       .reduce((s, m) => s + Number(m.valor_padrao), 0);
   }, [modelos]);
 
-  const recebido = useMemo(() => {
+  const recebidoRecorrente = useMemo(() => {
     return lancamentosMes
-      .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido')
+      .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido' && l.modelo_id)
       .reduce((s, l) => s + Number(l.valor_bruto), 0);
   }, [lancamentosMes]);
+
+  const avulsos = useMemo(() => {
+    return lancamentosMes
+      .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido' && !l.modelo_id)
+      .reduce((s, l) => s + Number(l.valor_bruto), 0);
+  }, [lancamentosMes]);
+
+  const recebido = recebidoRecorrente + avulsos;
 
   // Agrupar atalhos por categoria
   const atalhosAgrupados = useMemo(() => {
