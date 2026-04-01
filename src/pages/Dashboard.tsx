@@ -194,42 +194,64 @@ export default function Dashboard() {
       {/* Previsão Salarial */}
       <SalaryForecast previsao={previsao} recebido={recebido} />
 
-      {/* Atalhos rápidos */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {atalhos.map(atalho => {
-          const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
+      {/* Atalhos rápidos agrupados por categoria */}
+      {(() => {
+        const grouped: Record<string, typeof atalhos> = {};
+        atalhos.forEach(a => {
+          const catNome = a.categorias?.nome || 'Geral';
+          if (!grouped[catNome]) grouped[catNome] = [];
+          grouped[catNome].push(a);
+        });
+        const entries = Object.entries(grouped);
+        if (entries.length === 0) {
           return (
-            <Button
-              key={atalho.id}
-              variant="outline"
-              className="w-full h-14 gap-2 text-sm font-medium"
-              onClick={() => handleAtalho(atalho)}
-            >
-              <div
-                className="h-7 w-7 rounded-md flex items-center justify-center shrink-0"
-                style={{ backgroundColor: atalho.cor || '#3B82F6' }}
-              >
-                <Icon className="h-3.5 w-3.5 text-white" />
-              </div>
-              <span className="truncate">
-                {atalho.nome}
-                {Number(atalho.valor_padrao) > 0 && (
-                  <span className="block text-[10px] text-muted-foreground font-normal">
-                    {formatCurrency(Number(atalho.valor_padrao))}
-                  </span>
-                )}
-              </span>
-            </Button>
+            <Link to="/configuracoes" className="block">
+              <Button variant="outline" className="w-full h-14 gap-2 text-muted-foreground">
+                <Plus className="h-4 w-4" /> Configurar atalhos rápidos
+              </Button>
+            </Link>
           );
-        })}
-        {atalhos.length === 0 && (
-          <Link to="/configuracoes" className="col-span-2 sm:col-span-3">
-            <Button variant="outline" className="w-full h-14 gap-2 text-muted-foreground">
-              <Plus className="h-4 w-4" /> Configurar atalhos rápidos
-            </Button>
-          </Link>
-        )}
-      </div>
+        }
+        return entries.map(([catNome, items]) => (
+          <div key={catNome} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: items[0]?.categorias?.cor || '#888' }}
+              />
+              <h3 className="text-sm font-semibold">{catNome}</h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {items.map(atalho => {
+                const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
+                return (
+                  <Button
+                    key={atalho.id}
+                    variant="outline"
+                    className="w-full h-14 gap-2 text-sm font-medium"
+                    onClick={() => handleAtalho(atalho)}
+                  >
+                    <div
+                      className="h-7 w-7 rounded-md flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: atalho.cor || '#3B82F6' }}
+                    >
+                      <Icon className="h-3.5 w-3.5 text-white" />
+                    </div>
+                    <span className="truncate">
+                      {atalho.nome}
+                      {Number(atalho.valor_padrao) > 0 && (
+                        <span className="block text-[10px] text-muted-foreground font-normal">
+                          {formatCurrency(Number(atalho.valor_padrao))}
+                        </span>
+                      )}
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        ));
+      })()}
 
       {/* Cards do mês + Investimento */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
