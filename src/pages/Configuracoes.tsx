@@ -43,6 +43,8 @@ export default function Configuracoes() {
   const [novaCategoria, setNovaCategoria] = useState({ nome: '', tipo: 'despesa', cor: '#6b7280', icone: 'circle' });
   const [novoAtalho, setNovoAtalho] = useState({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
   const [editAtalhoId, setEditAtalhoId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
 
   const handleAddPessoa = async () => {
     if (!user || !novaPessoa.nome) return;
