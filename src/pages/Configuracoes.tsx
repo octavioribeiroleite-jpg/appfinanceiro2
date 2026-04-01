@@ -81,20 +81,14 @@ export default function Configuracoes() {
       ordem: atalhos.length,
     };
 
-    let error;
-    if (editAtalhoId) {
-      ({ error } = await supabase.from('atalhos_rapidos').update(payload).eq('id', editAtalhoId));
-    } else {
-      ({ error } = await supabase.from('atalhos_rapidos').insert(payload));
-    }
+    const { error } = await supabase.from('atalhos_rapidos').insert(payload);
 
     if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     else {
       queryClient.invalidateQueries({ queryKey: ['atalhos'] });
       queryClient.invalidateQueries({ queryKey: ['atalhos-all'] });
       setNovoAtalho({ nome: '', categoria_id: '', pessoa_id: '', valor_padrao: 0, cor: '#3B82F6', icone: 'zap' });
-      setEditAtalhoId(null);
-      toast({ title: editAtalhoId ? 'Atalho atualizado!' : 'Atalho adicionado!' });
+      toast({ title: 'Atalho adicionado!' });
     }
   };
 
