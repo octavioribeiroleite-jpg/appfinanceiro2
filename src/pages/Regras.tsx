@@ -22,6 +22,8 @@ export default function Regras() {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<any>({});
   const [showNew, setShowNew] = useState(false);
+  const [novaCategoriaNome, setNovaCategoriaNome] = useState('');
+  const [criarNovaCategoria, setCriarNovaCategoria] = useState(false);
   const [newForm, setNewForm] = useState({
     categoria_id: '',
     pessoa_id: '',
