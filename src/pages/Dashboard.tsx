@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLancamentos, useLancamentosAno, useAtalhosRapidos, useModelosRecorrentes } from '@/hooks/useFinanceData';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { formatCurrency, MESES } from '@/lib/format';
+import { formatCurrency, MESES, calcularDescontos } from '@/lib/format';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -120,6 +120,15 @@ export default function Dashboard() {
     } catch {}
 
     const hoje = new Date();
+    const { valorDizimo, valorImposto, valorGasolina, valorLiquido } = calcularDescontos(
+      valor,
+      r?.percentual_dizimo ?? 0,
+      r?.percentual_imposto ?? 0,
+      r?.percentual_gasolina ?? 0,
+      r?.aplicar_dizimo ?? false,
+      r?.aplicar_imposto ?? false,
+      r?.aplicar_gasolina ?? false,
+    );
     const payload = {
       user_id: user.id,
       pessoa_id: atalho.pessoa_id || atalho.categoria_id,
@@ -127,6 +136,10 @@ export default function Dashboard() {
       descricao: atalho.nome,
       tipo_lancamento: 'receita' as const,
       valor_bruto: valor,
+      valor_dizimo: valorDizimo,
+      valor_imposto: valorImposto,
+      valor_gasolina: valorGasolina,
+      valor_liquido: valorLiquido,
       percentual_dizimo: r?.percentual_dizimo ?? 0,
       percentual_imposto: r?.percentual_imposto ?? 0,
       percentual_gasolina: r?.percentual_gasolina ?? 0,
@@ -189,10 +202,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Previsão Salarial */}
-      <SalaryForecast previsao={previsao} recebido={recebido} />
-
-      {/* Atalhos rápidos agrupados por categoria */}
+      {/* Atalhos rápidos agrupados por categoria — fixos no topo */}
       {(() => {
         const grouped: Record<string, typeof atalhos> = {};
         atalhos.forEach(a => {
@@ -210,53 +220,65 @@ export default function Dashboard() {
             </Link>
           );
         }
-        return entries.map(([catNome, items]) => {
-          const totalGrupo = items.reduce((s, a) => s + Number(a.valor_padrao), 0);
-          return (
-          <div key={catNome} className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: items[0]?.categorias?.cor || '#888' }}
-              />
-              <h3 className="text-sm font-semibold">{catNome}</h3>
-              <span className="text-xs text-muted-foreground">({items.length})</span>
-              {totalGrupo > 0 && (
-                <span className="text-xs font-semibold ml-auto">{formatCurrency(totalGrupo)}</span>
-              )}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {items.map(atalho => {
-                const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
-                  return (
-                    <Button
-                      key={atalho.id}
-                      variant="outline"
-                      className="w-full h-16 gap-2 text-xs font-medium justify-start px-2"
-                      onClick={() => handleAtalho(atalho)}
-                    >
-                      <div
-                        className="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: atalho.cor || '#3B82F6' }}
-                      >
-                        <Icon className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="truncate text-left">
-                        <span className="block truncate">{atalho.nome}</span>
-                        {Number(atalho.valor_padrao) > 0 && (
-                          <span className="block text-[10px] text-muted-foreground font-normal">
-                            {formatCurrency(Number(atalho.valor_padrao))}
+        return (
+          <>
+            {entries.map(([catNome, items]) => {
+              const totalGrupo = items.reduce((s, a) => s + Number(a.valor_padrao), 0);
+              return (
+                <div key={catNome} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: items[0]?.categorias?.cor || '#888' }}
+                    />
+                    <h3 className="text-sm font-semibold">{catNome}</h3>
+                    <span className="text-xs text-muted-foreground">({items.length})</span>
+                    {totalGrupo > 0 && (
+                      <span className="text-xs font-semibold ml-auto">{formatCurrency(totalGrupo)}</span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {items.map(atalho => {
+                      const Icon = ICON_MAP[atalho.icone || 'zap'] || Zap;
+                      return (
+                        <Button
+                          key={atalho.id}
+                          variant="outline"
+                          className="w-full h-16 gap-2 text-xs font-medium justify-start px-2"
+                          onClick={() => handleAtalho(atalho)}
+                        >
+                          <div
+                            className="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: atalho.cor || '#3B82F6' }}
+                          >
+                            <Icon className="h-4 w-4 text-white" />
+                          </div>
+                          <span className="truncate text-left">
+                            <span className="block truncate">{atalho.nome}</span>
+                            {Number(atalho.valor_padrao) > 0 && (
+                              <span className="block text-[10px] text-muted-foreground font-normal">
+                                {formatCurrency(Number(atalho.valor_padrao))}
+                              </span>
+                            )}
                           </span>
-                        )}
-                      </span>
-                    </Button>
-                  );
-              })}
-            </div>
-          </div>
-          );
-        });
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            <Link to="/configuracoes" className="block">
+              <Button variant="outline" className="w-full h-12 gap-2 text-muted-foreground">
+                <Plus className="h-4 w-4" /> Adicionar atalho rápido
+              </Button>
+            </Link>
+          </>
+        );
       })()}
+
+      {/* Previsão Salarial */}
+      <SalaryForecast previsao={previsao} recebido={recebido} />
 
       {/* Cards do mês + Investimento */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
