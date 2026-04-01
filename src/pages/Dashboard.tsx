@@ -148,13 +148,8 @@ export default function Dashboard() {
 
   const handleAtalho = useCallback((atalho: typeof atalhos[0]) => {
     if (!user) return;
-    if (!atalho.valor_padrao || Number(atalho.valor_padrao) === 0) {
-      // Open dialog to enter value
-      setDialogAtalho(atalho);
-      return;
-    }
-    launchEntry(atalho);
-  }, [user, launchEntry]);
+    setDialogAtalho(atalho);
+  }, [user]);
 
   const cards = [
     { title: 'Bruto', value: resumoMes.bruto, icon: TrendingUp, color: 'text-primary' },
