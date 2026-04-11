@@ -1,20 +1,25 @@
 
 
-# Padronizar Layout e Responsividade do App
+# Adicionar "Restante a Receber" na Previsao Salarial
 
-## Problemas Identificados
+## Situacao atual
+- Previsao = R$ 9.600 (soma dos 13 modelos recorrentes ativos)
+- Recebido recorrente = R$ 0 (nenhum lancamento de abril tem `modelo_id`)
+- Avulsos = R$ 5.018,20 (10 lancamentos avulsos)
+- Total mes = R$ 14.618,20 / Recebido = R$ 5.018,20
+- **Restante a receber = R$ 9.600,00** (todas as recorrencias pendentes)
 
-1. **Header e navegacao inconsistentes**: O AppLayout usa navegacao bottom-bar no mobile com overlay "Mais", mas pode cortar em telas pequenas
-2. **Espacamento sem padrao**: Cada pagina define seus proprios gaps, paddings e grid layouts de formas diferentes
-3. **Tipografia inconsistente**: Titulos variam entre `text-2xl`, `text-base`, `text-lg` sem hierarquia clara
-4. **Cards sem padrao**: Padding varia entre `p-3`, `p-4`, `p-6` em diferentes paginas
-5. **Filtros desordenados**: Na tela de Lancamentos, 6 selects em grid cortam em mobile
-6. **Desktop offset manual**: O `margin-left: 14rem` e feito via tag `<style>` inline, fragil
-7. **Formularios sem consistencia**: NovoLancamento usa `max-w-lg mx-auto`, outras paginas nao
+## Sobre o calendario
+O app nao usa um calendario visual — usa selects de mes/ano. O componente `Calendar` existe mas nao esta integrado. Se quiser um calendario visual no Dashboard, posso adicionar, mas o seletor atual esta funcionando corretamente com os meses em portugues (Janeiro-Dezembro).
 
-## Plano de Padronizacao
+## Plano
 
-### 1. Criar componente `PageContainer` reutilizavel
-- Wrapper padrao para todas as paginas com titulo, subtitulo opcional e acoes
-- Espacamento consistente: `space-y-6` entre secoes
-- Titulo sempre
+### 1. Adicionar linha "Restante a receber" no SalaryForecast
+- Calcular `restante = totalMes - totalRecebido`
+- Exibir entre o total recebido e a barra de progresso
+- Mostrar em cor amber/laranja para destaque
+- Mostrar quantos dias faltam no mes atual
+
+### Arquivo modificado
+- `src/components/dashboard/SalaryForecast.tsx` — adicionar calculo do restante, linha visual com valor e dias restantes no mes
+
