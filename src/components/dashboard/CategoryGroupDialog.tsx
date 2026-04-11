@@ -1,17 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/format';
-import { Check } from 'lucide-react';
 
-interface Atalho {
+interface Lancamento {
   id: string;
-  nome: string;
-  valor_padrao: number;
-  categoria_id: string;
-  pessoa_id: string | null;
-  cor: string | null;
-  icone: string | null;
-  categorias?: { nome: string; cor: string | null } | null;
+  descricao: string;
+  valor_bruto: number;
+  valor_liquido: number;
+  status: string;
+  data_prevista: string | null;
 }
 
 interface Props {
@@ -19,15 +15,14 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   categoriaNome: string;
   categoriaCor: string;
-  atalhos: Atalho[];
-  onLancar: (atalho: Atalho) => void;
+  lancamentos: Lancamento[];
+  totalBruto: number;
+  totalLiquido: number;
 }
 
 export default function CategoryGroupDialog({
-  open, onOpenChange, categoriaNome, categoriaCor, atalhos, onLancar,
+  open, onOpenChange, categoriaNome, categoriaCor, lancamentos, totalBruto, totalLiquido,
 }: Props) {
-  const total = atalhos.reduce((s, a) => s + Number(a.valor_padrao), 0);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
@@ -36,32 +31,36 @@ export default function CategoryGroupDialog({
             <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: categoriaCor }} />
             {categoriaNome}
             <span className="text-xs text-muted-foreground font-normal ml-auto">
-              {atalhos.length} itens · {formatCurrency(total)}
+              {lancamentos.length} lançamento{lancamentos.length > 1 ? 's' : ''}
             </span>
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex justify-between text-sm font-semibold px-1 pb-1 border-b">
+          <span>Bruto: {formatCurrency(totalBruto)}</span>
+          <span className="text-muted-foreground">Líq: {formatCurrency(totalLiquido)}</span>
+        </div>
+
         <div className="space-y-2">
-          {atalhos.map(atalho => (
+          {lancamentos.map(l => (
             <div
-              key={atalho.id}
+              key={l.id}
               className="flex items-center justify-between p-3 rounded-lg border bg-card"
             >
               <div>
-                <p className="text-sm font-medium">{atalho.nome}</p>
+                <p className="text-sm font-medium">{l.descricao}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatCurrency(Number(atalho.valor_padrao))}
+                  {l.data_prevista ? new Date(l.data_prevista + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}
+                  {' · '}
+                  <span className={l.status === 'recebido' ? 'text-emerald-600' : 'text-amber-600'}>
+                    {l.status === 'recebido' ? 'Recebido' : 'Pendente'}
+                  </span>
                 </p>
               </div>
-              <Button
-                size="sm"
-                className="h-8 gap-1.5"
-                onClick={() => {
-                  onLancar(atalho);
-                }}
-              >
-                <Check className="h-3.5 w-3.5" /> Lançar
-              </Button>
+              <div className="text-right shrink-0">
+                <p className="text-sm font-semibold">{formatCurrency(Number(l.valor_bruto))}</p>
+                <p className="text-xs text-muted-foreground">Líq: {formatCurrency(Number(l.valor_liquido))}</p>
+              </div>
             </div>
           ))}
         </div>
