@@ -268,7 +268,7 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-sm font-semibold ${
+                        <span className={`text-sm font-semibold tabular-nums text-right min-w-[90px] ${
                           modelo.recebido 
                             ? 'text-muted-foreground' 
                             : modelo.atrasado 
