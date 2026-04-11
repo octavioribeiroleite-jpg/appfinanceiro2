@@ -190,10 +190,6 @@ export default function Dashboard() {
     }
   }, [user, toast, queryClient]);
 
-  const handleLancarFromGroup = useCallback((atalho: any) => {
-    setCategoriaAberta(null);
-    setDialogAtalho(atalho);
-  }, []);
 
   const cards = [
     { title: 'Bruto', value: resumoMes.bruto, icon: TrendingUp, color: 'text-primary' },
