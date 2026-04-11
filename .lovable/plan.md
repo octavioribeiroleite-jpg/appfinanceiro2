@@ -1,25 +1,21 @@
 
 
-# Adicionar "Restante a Receber" na Previsao Salarial
+# Corrigir "Resumo por Categoria" para mostrar lançamentos reais
 
-## Situacao atual
-- Previsao = R$ 9.600 (soma dos 13 modelos recorrentes ativos)
-- Recebido recorrente = R$ 0 (nenhum lancamento de abril tem `modelo_id`)
-- Avulsos = R$ 5.018,20 (10 lancamentos avulsos)
-- Total mes = R$ 14.618,20 / Recebido = R$ 5.018,20
-- **Restante a receber = R$ 9.600,00** (todas as recorrencias pendentes)
+## Problema
+A seção "Resumo por Categoria" no Dashboard soma `valor_padrao` dos **atalhos rápidos**, não dos **lançamentos reais** do mês. Por isso mostra R$ 820 para Raio X quando na verdade foram recebidos R$ 4.270.
 
-## Sobre o calendario
-O app nao usa um calendario visual — usa selects de mes/ano. O componente `Calendar` existe mas nao esta integrado. Se quiser um calendario visual no Dashboard, posso adicionar, mas o seletor atual esta funcionando corretamente com os meses em portugues (Janeiro-Dezembro).
+## Solução
+Alterar o "Resumo por Categoria" para agrupar os **lançamentos do mês** por categoria, mostrando valores reais (bruto e líquido), quantidade de lançamentos, e status de recebimento.
 
-## Plano
+### Alterações em `src/pages/Dashboard.tsx`
+1. Substituir o `atalhosAgrupados` (que agrupa atalhos) por um `lancamentosAgrupados` que agrupa os lançamentos reais do mês por `categoria_id`
+2. Cada card mostrará: nome da categoria, cor, valor bruto total, quantidade de lançamentos
+3. Ao clicar no card, abrir um dialog mostrando os lançamentos individuais daquela categoria (reutilizar ou adaptar o CategoryGroupDialog)
+4. Remover a lógica duplicada com o "Ganhos por Fonte" (CategoryBreakdown) — ambos mostram a mesma coisa, então unificar em uma única seção
 
-### 1. Adicionar linha "Restante a receber" no SalaryForecast
-- Calcular `restante = totalMes - totalRecebido`
-- Exibir entre o total recebido e a barra de progresso
-- Mostrar em cor amber/laranja para destaque
-- Mostrar quantos dias faltam no mes atual
-
-### Arquivo modificado
-- `src/components/dashboard/SalaryForecast.tsx` — adicionar calculo do restante, linha visual com valor e dias restantes no mes
+### Resultado esperado
+- Raio X - Dinheiro: **R$ 4.270,00** (7 lançamentos)
+- Vendas: **R$ 628,20** (2 lançamentos)  
+- Eletro: **R$ 120,00** (1 lançamento)
 
