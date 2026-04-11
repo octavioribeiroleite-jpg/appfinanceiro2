@@ -226,7 +226,7 @@ export default function Dashboard() {
       </div>
 
       {/* 1. Previsão Salarial */}
-      <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} />
+      <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} mes={mes} ano={ano} />
 
       {/* 2. Atalhos Rápidos — botões individuais para lançamento rápido */}
       <div className="space-y-2">
