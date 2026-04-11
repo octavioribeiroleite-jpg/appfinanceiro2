@@ -203,8 +203,8 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         {modelo.recebido ? (
-                          <div className="h-5 w-5 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                            <Check className="h-3 w-3 text-emerald-600" />
+                          <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                            <Check className="h-3 w-3 text-primary" />
                           </div>
                         ) : (
                           <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 shrink-0" />
@@ -223,7 +223,7 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 rounded-full hover:bg-emerald-500/20 hover:text-emerald-600"
+                            className="h-7 w-7 rounded-full hover:bg-primary/20 hover:text-primary"
                             disabled={loading === modelo.id}
                             onClick={() => handleCheckClick(modelo)}
                           >
