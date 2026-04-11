@@ -64,24 +64,38 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
 
   const lancadosIds = useMemo(() => new Set(lancadosMap.keys()), [lancadosMap]);
 
+  const hoje = new Date();
+  const diaHoje = hoje.getDate();
+  const mesAtual = hoje.getMonth() + 1;
+  const anoAtual = hoje.getFullYear();
+  const isMesAtual = mes === mesAtual && ano === anoAtual;
+
   // Agrupar por pessoa
   const grupos = useMemo(() => {
-    const map: Record<string, { pessoa: string; modelos: (Modelo & { recebido: boolean })[] }> = {};
+    const map: Record<string, { pessoa: string; modelos: (Modelo & { recebido: boolean; atrasado: boolean })[] }> = {};
     modelosAtivos.forEach(m => {
       const pessoaId = m.pessoa_id;
       const pessoaNome = m.pessoas?.nome || 'Sem pessoa';
       if (!map[pessoaId]) map[pessoaId] = { pessoa: pessoaNome, modelos: [] };
-      map[pessoaId].modelos.push({ ...m, recebido: lancadosIds.has(m.id) });
+      const recebido = lancadosIds.has(m.id);
+      const dia = m.dia_referencia ?? 99;
+      const atrasado = !recebido && isMesAtual && dia < diaHoje;
+      map[pessoaId].modelos.push({ ...m, recebido, atrasado });
     });
-    // Sort: pendentes primeiro dentro de cada grupo
+    // Sort: atrasados primeiro, depois pendentes por dia, depois recebidos
     Object.values(map).forEach(g => {
       g.modelos.sort((a, b) => {
         if (a.recebido !== b.recebido) return a.recebido ? 1 : -1;
-        return a.descricao.localeCompare(b.descricao);
+        if (!a.recebido && !b.recebido) {
+          if (a.atrasado !== b.atrasado) return a.atrasado ? -1 : 1;
+        }
+        const diaA = a.dia_referencia ?? 99;
+        const diaB = b.dia_referencia ?? 99;
+        return diaA - diaB;
       });
     });
     return map;
-  }, [modelosAtivos, lancadosIds]);
+  }, [modelosAtivos, lancadosIds, isMesAtual, diaHoje]);
 
   const darBaixa = useCallback(async (modelo: Modelo, valorOverride?: number) => {
     if (!user) return;
