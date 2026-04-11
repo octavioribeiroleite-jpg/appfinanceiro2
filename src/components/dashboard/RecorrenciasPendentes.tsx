@@ -21,6 +21,7 @@ interface Modelo {
   pessoa_id: string;
   tipo_lancamento: string;
   ativo: boolean;
+  dia_referencia?: number | null;
   pessoas?: { id: string; nome: string } | null;
   categorias?: { id: string; nome: string; cor: string | null } | null;
 }
