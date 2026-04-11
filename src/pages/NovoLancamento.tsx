@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePessoas, useCategorias, useRegras } from '@/hooks/useFinanceData';
@@ -187,8 +188,8 @@ export default function NovoLancamento() {
   const update = (field: keyof LancamentoForm, value: any) => setForm(f => ({ ...f, [field]: value }));
 
   return (
-    <div className="space-y-4 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold">{editId ? 'Editar Lançamento' : 'Novo Lançamento'}</h1>
+    <div className="space-y-6 max-w-lg mx-auto">
+      <PageHeader title={editId ? 'Editar Lançamento' : 'Novo Lançamento'} />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Tipo */}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { usePessoas, useCategorias } from '@/hooks/useFinanceData';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -162,8 +163,8 @@ export default function Configuracoes() {
   ];
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Configurações</h1>
+    <div className="space-y-6">
+      <PageHeader title="Configurações" />
 
       <Tabs defaultValue="atalhos">
         <TabsList className="w-full grid grid-cols-3">

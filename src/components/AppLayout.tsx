@@ -101,7 +101,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Bottom Nav - mobile (4 items: 3 main + Mais) */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t z-50 md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t z-50 md:hidden pb-safe">
         <div className="flex justify-around py-2">
           {mainNav.map(item => {
             const active = location.pathname === item.to;

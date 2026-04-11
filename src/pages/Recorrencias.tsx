@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { useModelosRecorrentes, usePessoas, useCategorias } from '@/hooks/useFinanceData';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -132,14 +133,11 @@ export default function Recorrencias() {
   const modoLabels: Record<string, string> = { fixo: 'Fixo', editavel: 'Editável', incremental: 'Incremental' };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Recorrências</h1>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={handleGerarMes}>Gerar Mês</Button>
-          <Button size="sm" onClick={() => setShowNew(!showNew)}>{showNew ? 'Cancelar' : '+ Novo'}</Button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader title="Recorrências">
+        <Button size="sm" variant="outline" onClick={handleGerarMes}>Gerar Mês</Button>
+        <Button size="sm" onClick={() => setShowNew(!showNew)}>{showNew ? 'Cancelar' : '+ Novo'}</Button>
+      </PageHeader>
 
       {showNew && (
         <Card>
