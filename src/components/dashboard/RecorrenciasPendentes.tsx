@@ -234,7 +234,7 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
                         modelo.recebido
                           ? 'bg-muted/50'
                           : modelo.atrasado
-                            ? 'bg-destructive/10 animate-pulse'
+                            ? 'bg-destructive/10 animate-pulse text-left'
                             : 'hover:bg-muted/30'
                       }`}
                     >
