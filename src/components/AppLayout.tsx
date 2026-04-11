@@ -61,7 +61,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* Content */}
-      <main className="flex-1 p-4 pb-20 max-w-5xl mx-auto w-full">
+      <main className="flex-1 p-4 pb-20 md:p-6 md:pb-6 md:ml-56 max-w-5xl mx-auto w-full">
         {children}
       </main>
 
@@ -152,12 +152,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         })}
       </nav>
 
-      {/* Desktop content offset */}
-      <style>{`
-        @media (min-width: 768px) {
-          main { margin-left: 14rem; }
-        }
-      `}</style>
     </div>
   );
 }

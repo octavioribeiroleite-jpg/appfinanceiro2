@@ -112,3 +112,10 @@
     @apply text-2xl font-bold tracking-tight;
   }
 }
+
+/* Safe area for bottom nav on notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+}
