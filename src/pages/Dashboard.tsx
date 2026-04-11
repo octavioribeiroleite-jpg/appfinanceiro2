@@ -20,6 +20,7 @@ import SalaryForecast from '@/components/dashboard/SalaryForecast';
 import InvestmentCard from '@/components/dashboard/InvestmentCard';
 import QuickValueDialog from '@/components/dashboard/QuickValueDialog';
 import CategoryGroupDialog from '@/components/dashboard/CategoryGroupDialog';
+import RecorrenciasPendentes from '@/components/dashboard/RecorrenciasPendentes';
 
 const EMOJI_MAP: Record<string, string> = {
   zap: '⚡', activity: '❤️‍🩹', heart: '❤️', dumbbell: '🏋️',
@@ -229,7 +230,10 @@ export default function Dashboard() {
       {/* 1. Previsão Salarial */}
       <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} mes={mes} ano={ano} />
 
-      {/* 2. Atalhos Rápidos — botões individuais para lançamento rápido */}
+      {/* 2. Recorrências Pendentes */}
+      <RecorrenciasPendentes modelos={modelos} lancamentosMes={lancamentosMes} mes={mes} ano={ano} />
+
+      {/* 3. Atalhos Rápidos — botões individuais para lançamento rápido */}
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground">Atalhos Rápidos</h2>
         {atalhos.length > 0 ? (
