@@ -147,7 +147,25 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
     }
   }, [user, mes, ano, toast, queryClient]);
 
-  const handleCheckClick = useCallback((modelo: Modelo) => {
+  const desfazerBaixa = useCallback(async (modelo: Modelo) => {
+    const lancamentoId = lancadosMap.get(modelo.id);
+    if (!lancamentoId) return;
+    setLoading(modelo.id);
+    try {
+      const { error } = await supabase.from('lancamentos').delete().eq('id', lancamentoId);
+      if (error) {
+        toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
+        queryClient.invalidateQueries({ queryKey: ['lancamentos-ano'] });
+        toast({ title: `${modelo.descricao} — baixa desfeita` });
+      }
+    } finally {
+      setLoading(null);
+    }
+  }, [lancadosMap, toast, queryClient]);
+
+
     if (modelo.modo_valor === 'variavel' || Number(modelo.valor_padrao) === 0) {
       setDialogModelo(modelo);
       setValorCustom(Number(modelo.valor_padrao) > 0 ? String(modelo.valor_padrao) : '');
