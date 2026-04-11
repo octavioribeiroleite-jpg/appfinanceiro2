@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { useLancamentos, useLancamentosAno, usePessoas } from '@/hooks/useFinanceData';
 import { formatCurrency, MESES } from '@/lib/format';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -235,9 +236,9 @@ export default function Relatorios() {
   const defaultTab = pessoas.length > 0 ? pessoas[0].id : 'geral';
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Relatórios</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-xl font-semibold sm:text-2xl">Relatórios</h1>
         <div className="flex gap-2">
           <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
             <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>

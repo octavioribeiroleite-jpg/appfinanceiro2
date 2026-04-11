@@ -201,10 +201,10 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header + month/year selector */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-xl font-semibold sm:text-2xl">Dashboard</h1>
         <div className="flex gap-2">
           <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
             <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
@@ -239,7 +239,7 @@ export default function Dashboard() {
                 className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => setDialogAtalho(atalho)}
               >
-                <CardContent className="p-3">
+                <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <div
                       className="h-3 w-3 rounded-full shrink-0"

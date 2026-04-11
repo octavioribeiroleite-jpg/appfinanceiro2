@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import PageHeader from '@/components/PageHeader';
 import { useLancamentos, usePessoas, useCategorias } from '@/hooks/useFinanceData';
 import { formatCurrency, formatDate, MESES } from '@/lib/format';
 import { supabase } from '@/integrations/supabase/client';
@@ -92,11 +93,10 @@ export default function Lancamentos() {
   const totalDespesas = lancamentos.filter(l => l.tipo_lancamento === 'despesa').reduce((s, l) => s + Number(l.valor_bruto), 0);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Lançamentos</h1>
+    <div className="space-y-6">
+      <PageHeader title="Lançamentos">
         <Link to="/novo"><Button size="sm">+ Novo</Button></Link>
-      </div>
+      </PageHeader>
 
       {/* Filters */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -172,7 +172,7 @@ export default function Lancamentos() {
         <div className="space-y-2">
           {lancamentos.map(l => (
             <Card key={l.id}>
-              <CardContent className="p-3">
+              <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

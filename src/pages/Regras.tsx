@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PageHeader from '@/components/PageHeader';
 import { useRegras, useCategorias, usePessoas } from '@/hooks/useFinanceData';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -166,11 +167,10 @@ export default function Regras() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Regras Automáticas</h1>
+    <div className="space-y-6">
+      <PageHeader title="Regras Automáticas">
         <Button size="sm" onClick={() => setShowNew(!showNew)}>{showNew ? 'Cancelar' : '+ Nova'}</Button>
-      </div>
+      </PageHeader>
 
       {showNew && (
         <Card>

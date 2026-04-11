@@ -61,7 +61,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* Content */}
-      <main className="flex-1 p-4 pb-20 max-w-5xl mx-auto w-full">
+      <main className="flex-1 p-4 pb-20 md:p-6 md:pb-6 md:ml-56 max-w-5xl mx-auto w-full">
         {children}
       </main>
 
@@ -101,7 +101,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Bottom Nav - mobile (4 items: 3 main + Mais) */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t z-50 md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t z-50 md:hidden pb-safe">
         <div className="flex justify-around py-2">
           {mainNav.map(item => {
             const active = location.pathname === item.to;
@@ -152,12 +152,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         })}
       </nav>
 
-      {/* Desktop content offset */}
-      <style>{`
-        @media (min-width: 768px) {
-          main { margin-left: 14rem; }
-        }
-      `}</style>
     </div>
   );
 }
