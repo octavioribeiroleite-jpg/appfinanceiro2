@@ -165,7 +165,7 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
     }
   }, [lancadosMap, toast, queryClient]);
 
-
+  const handleCheckClick = useCallback((modelo: Modelo) => {
     if (modelo.modo_valor === 'variavel' || Number(modelo.valor_padrao) === 0) {
       setDialogModelo(modelo);
       setValorCustom(Number(modelo.valor_padrao) > 0 ? String(modelo.valor_padrao) : '');
