@@ -239,7 +239,18 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
                             ? formatCurrency(Number(modelo.valor_padrao))
                             : 'Variável'}
                         </span>
-                        {!modelo.recebido && (
+                        {modelo.recebido ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-full hover:bg-destructive/20 hover:text-destructive"
+                            disabled={loading === modelo.id}
+                            onClick={() => desfazerBaixa(modelo)}
+                            title="Desfazer baixa"
+                          >
+                            <Undo2 className="h-4 w-4" />
+                          </Button>
+                        ) : (
                           <Button
                             variant="ghost"
                             size="icon"
