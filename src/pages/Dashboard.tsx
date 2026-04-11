@@ -16,7 +16,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 import SalaryForecast from '@/components/dashboard/SalaryForecast';
-import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
+
 import InvestmentCard from '@/components/dashboard/InvestmentCard';
 import QuickValueDialog from '@/components/dashboard/QuickValueDialog';
 import CategoryGroupDialog from '@/components/dashboard/CategoryGroupDialog';
@@ -64,20 +64,25 @@ export default function Dashboard() {
 
   const recebido = recebidoRecorrente + avulsos;
 
-  // Agrupar atalhos por categoria
-  const atalhosAgrupados = useMemo(() => {
-    const grouped: Record<string, { nome: string; cor: string; items: typeof atalhos }> = {};
-    atalhos.forEach(a => {
-      const catId = a.categoria_id;
-      const catNome = a.categorias?.nome || 'Geral';
-      const catCor = a.categorias?.cor || '#888';
-      if (!grouped[catId]) grouped[catId] = { nome: catNome, cor: catCor, items: [] };
-      grouped[catId].items.push(a);
-    });
+  // Agrupar lançamentos reais do mês por categoria
+  const lancamentosAgrupados = useMemo(() => {
+    const grouped: Record<string, { nome: string; cor: string; bruto: number; liquido: number; qtd: number; items: typeof lancamentosMes }> = {};
+    lancamentosMes
+      .filter(l => l.tipo_lancamento === 'receita')
+      .forEach(l => {
+        const catId = l.categoria_id;
+        const catNome = l.categorias?.nome || 'Geral';
+        const catCor = l.categorias?.cor || '#888';
+        if (!grouped[catId]) grouped[catId] = { nome: catNome, cor: catCor, bruto: 0, liquido: 0, qtd: 0, items: [] };
+        grouped[catId].bruto += Number(l.valor_bruto);
+        grouped[catId].liquido += Number(l.valor_liquido);
+        grouped[catId].qtd += 1;
+        grouped[catId].items.push(l);
+      });
     return grouped;
-  }, [atalhos]);
+  }, [lancamentosMes]);
 
-  const categoriaAbertaData = categoriaAberta ? atalhosAgrupados[categoriaAberta] : null;
+  const categoriaAbertaData = categoriaAberta ? lancamentosAgrupados[categoriaAberta] : null;
 
   const resumoMes = useMemo(() => {
     const receitas = lancamentosMes.filter(l => l.tipo_lancamento === 'receita');
@@ -271,14 +276,14 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* 3. Resumo por Categoria — cards agrupados */}
-      {Object.keys(atalhosAgrupados).length > 0 && (
+      {/* 3. Resumo por Categoria — lançamentos reais do mês */}
+      {Object.keys(lancamentosAgrupados).length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-muted-foreground">Resumo por Categoria</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground">Receitas por Categoria</h2>
           <div className="grid grid-cols-2 gap-3">
-            {Object.entries(atalhosAgrupados).map(([catId, group]) => {
-              const totalGrupo = group.items.reduce((s, a) => s + Number(a.valor_padrao), 0);
-              return (
+            {Object.entries(lancamentosAgrupados)
+              .sort(([, a], [, b]) => b.bruto - a.bruto)
+              .map(([catId, group]) => (
                 <Card
                   key={catId}
                   className="cursor-pointer hover:shadow-md transition-shadow"
@@ -292,12 +297,13 @@ export default function Dashboard() {
                       />
                       <span className="text-sm font-semibold truncate">{group.nome}</span>
                     </div>
-                    <p className="text-lg font-bold">{formatCurrency(totalGrupo)}</p>
-                    <p className="text-xs text-muted-foreground">{group.items.length} itens</p>
+                    <p className="text-lg font-bold">{formatCurrency(group.bruto)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {group.qtd} lançamento{group.qtd > 1 ? 's' : ''} · Líq: {formatCurrency(group.liquido)}
+                    </p>
                   </CardContent>
                 </Card>
-              );
-            })}
+              ))}
           </div>
         </div>
       )}
@@ -320,8 +326,6 @@ export default function Dashboard() {
       {/* 5. Investimento */}
       <InvestmentCard liquidoMes={resumoMes.liquido} />
 
-      {/* 6. Ganhos por Fonte */}
-      <CategoryBreakdown lancamentos={lancamentosMes} />
 
       {/* 7. Resumo anual */}
       <Card>
@@ -388,14 +392,15 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Category Group Dialog */}
+      {/* Category Group Dialog — mostra lançamentos reais */}
       <CategoryGroupDialog
         open={!!categoriaAberta && !!categoriaAbertaData}
         onOpenChange={open => !open && setCategoriaAberta(null)}
         categoriaNome={categoriaAbertaData?.nome || ''}
         categoriaCor={categoriaAbertaData?.cor || '#888'}
-        atalhos={categoriaAbertaData?.items || []}
-        onLancar={handleLancarFromGroup}
+        lancamentos={categoriaAbertaData?.items || []}
+        totalBruto={categoriaAbertaData?.bruto || 0}
+        totalLiquido={categoriaAbertaData?.liquido || 0}
       />
 
       {/* Quick value dialog */}
