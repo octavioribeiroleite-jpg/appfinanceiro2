@@ -1,63 +1,36 @@
 
 
-# Recorrências da Cíntia no Dashboard — Dar Baixa Rápida
+# Atualizar Recorrências da Cíntia — Migração SQL
 
-## Situação atual
-- Cíntia tem **13 modelos recorrentes** (Personal Cintia), totalizando R$ 9.600/mês
-- Nenhum lançamento foi gerado para abril/2026 — os modelos existem mas não foram convertidos em lançamentos
-- Não há forma rápida no Dashboard de ver quais recorrências já foram pagas e dar baixa
+## Alterações necessárias (1 migração)
 
-## Solução: Seção "Recorrências Pendentes" no Dashboard
+### Atualizações de valor e dia
+| Aluno | Valor | Dia |
+|-------|-------|-----|
+| Amanda | 1400 | 3 |
+| João | 840 | 25 |
+| Patricia | 840 | 10 |
+| Bento | (manter) | 13 |
+| Mayara | (manter) | 9 |
+| Morada | (manter) | 10 |
+| Laura | (manter) | 12 |
+| Irleis | (manter) | 13 |
+| Casal | (manter) | 25 |
+| Thais | (manter) | 16 |
+| Dupla Boulevard | (manter) | 3 |
 
-Adicionar uma seção logo abaixo da Previsão Salarial, agrupada por pessoa (ex: "Cíntia", "Octávio"), mostrando cada recorrência como um card compacto com botão de dar baixa rápida.
+### Hiany — dividir em 2 parcelas
+- Atualizar registro existente: descricao "Hiany (1ª)", valor 420, dia 10
+- Criar novo registro: descricao "Hiany (2ª)", valor 420, dia 26, copiando user_id, pessoa_id, categoria_id e configs
 
-### Layout (mobile-first, 384px)
+### Remover Thiago
+- Deletar o registro do Thiago
 
-```text
-┌─────────────────────────────┐
-│ 👤 Cíntia — Personal        │
-│ 8 de 13 pendentes           │
-├─────────────────────────────┤
-│ ✅ Amanda      R$ 1.200     │
-│ ✅ Bento       R$   400     │
-│ ⬜ Casal       R$ 1.600  [✓]│
-│ ⬜ Dupla Blvd  R$   550  [✓]│
-│ ⬜ Hiany       R$   720  [✓]│
-│ ...                         │
-└─────────────────────────────┘
-```
+### Resultado final
+- 12 alunos, 13 registros (Hiany 2x)
+- Total: R$ 9.540/mês
+- Todos com dia de referência correto
 
-- Cada item mostra nome, valor padrão e status (recebido/pendente)
-- Botão de check ao lado para dar baixa instantânea (cria o lançamento com status "recebido")
-- Items já recebidos ficam com check verde e texto riscado
-- Possibilidade de editar o valor antes de confirmar (toque longo ou ícone de edição)
-- Card colapsável para não ocupar muito espaço quando já viu tudo
-
-### Fluxo ao dar baixa
-1. Usuário toca no check de "Casal"
-2. Sistema busca a regra da categoria (dízimo/imposto/gasolina)
-3. Cria lançamento com `modelo_id` vinculado, status "recebido", mês/ano atuais
-4. Atualiza a lista e a previsão salarial instantaneamente
-5. Se o valor for variável (`modo_valor = 'variavel'`), abre mini-dialog para digitar o valor
-
-### Alterações
-
-1. **Novo componente `src/components/dashboard/RecorrenciasPendentes.tsx`**
-   - Recebe `modelos` (recorrentes ativos) e `lancamentosMes` (lançamentos do mês)
-   - Cruza por `modelo_id` para saber quais já foram lançados
-   - Agrupa por pessoa (Cíntia, Octávio)
-   - Renderiza lista compacta com toggle de dar baixa
-
-2. **`src/pages/Dashboard.tsx`**
-   - Importar e posicionar o novo componente após SalaryForecast
-   - Passar `modelos`, `lancamentosMes`, `mes`, `ano` como props
-
-3. **Lógica de dar baixa** (dentro do componente)
-   - Reutiliza a mesma lógica de `launchEntry` do Dashboard (busca regra, calcula descontos, insere lançamento)
-   - Vincula o `modelo_id` para que a previsão salarial reconheça como recorrência recebida
-
-### Resultado esperado
-- Ao abrir o Dashboard, o usuário vê imediatamente quais alunos da Cíntia já pagaram e quais faltam
-- Um toque para dar baixa, sem navegar para outra tela
-- A previsão salarial atualiza automaticamente conforme as baixas são dadas
+### Implementacao
+Uma migração SQL com todos os UPDATEs, INSERT da Hiany (2ª) e DELETE do Thiago, usando os IDs existentes no banco.
 
