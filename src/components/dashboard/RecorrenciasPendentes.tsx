@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Check, ChevronDown, ChevronUp, User, Pencil } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, User, Pencil, Undo2 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface Modelo {
@@ -53,13 +53,15 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
     [modelos]
   );
 
-  const lancadosIds = useMemo(() => {
-    const set = new Set<string>();
+  const lancadosMap = useMemo(() => {
+    const map = new Map<string, string>(); // modelo_id -> lancamento_id
     lancamentosMes.forEach(l => {
-      if (l.modelo_id) set.add(l.modelo_id);
+      if (l.modelo_id) map.set(l.modelo_id, l.id);
     });
-    return set;
+    return map;
   }, [lancamentosMes]);
+
+  const lancadosIds = useMemo(() => new Set(lancadosMap.keys()), [lancadosMap]);
 
   // Agrupar por pessoa
   const grupos = useMemo(() => {
@@ -145,6 +147,24 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
     }
   }, [user, mes, ano, toast, queryClient]);
 
+  const desfazerBaixa = useCallback(async (modelo: Modelo) => {
+    const lancamentoId = lancadosMap.get(modelo.id);
+    if (!lancamentoId) return;
+    setLoading(modelo.id);
+    try {
+      const { error } = await supabase.from('lancamentos').delete().eq('id', lancamentoId);
+      if (error) {
+        toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
+        queryClient.invalidateQueries({ queryKey: ['lancamentos-ano'] });
+        toast({ title: `${modelo.descricao} — baixa desfeita` });
+      }
+    } finally {
+      setLoading(null);
+    }
+  }, [lancadosMap, toast, queryClient]);
+
   const handleCheckClick = useCallback((modelo: Modelo) => {
     if (modelo.modo_valor === 'variavel' || Number(modelo.valor_padrao) === 0) {
       setDialogModelo(modelo);
@@ -219,7 +239,18 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
                             ? formatCurrency(Number(modelo.valor_padrao))
                             : 'Variável'}
                         </span>
-                        {!modelo.recebido && (
+                        {modelo.recebido ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-full hover:bg-destructive/20 hover:text-destructive"
+                            disabled={loading === modelo.id}
+                            onClick={() => desfazerBaixa(modelo)}
+                            title="Desfazer baixa"
+                          >
+                            <Undo2 className="h-4 w-4" />
+                          </Button>
+                        ) : (
                           <Button
                             variant="ghost"
                             size="icon"
