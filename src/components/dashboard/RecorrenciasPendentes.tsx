@@ -21,6 +21,7 @@ interface Modelo {
   pessoa_id: string;
   tipo_lancamento: string;
   ativo: boolean;
+  dia_referencia?: number | null;
   pessoas?: { id: string; nome: string } | null;
   categorias?: { id: string; nome: string; cor: string | null } | null;
 }
@@ -63,24 +64,38 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
 
   const lancadosIds = useMemo(() => new Set(lancadosMap.keys()), [lancadosMap]);
 
+  const hoje = new Date();
+  const diaHoje = hoje.getDate();
+  const mesAtual = hoje.getMonth() + 1;
+  const anoAtual = hoje.getFullYear();
+  const isMesAtual = mes === mesAtual && ano === anoAtual;
+
   // Agrupar por pessoa
   const grupos = useMemo(() => {
-    const map: Record<string, { pessoa: string; modelos: (Modelo & { recebido: boolean })[] }> = {};
+    const map: Record<string, { pessoa: string; modelos: (Modelo & { recebido: boolean; atrasado: boolean })[] }> = {};
     modelosAtivos.forEach(m => {
       const pessoaId = m.pessoa_id;
       const pessoaNome = m.pessoas?.nome || 'Sem pessoa';
       if (!map[pessoaId]) map[pessoaId] = { pessoa: pessoaNome, modelos: [] };
-      map[pessoaId].modelos.push({ ...m, recebido: lancadosIds.has(m.id) });
+      const recebido = lancadosIds.has(m.id);
+      const dia = m.dia_referencia ?? 99;
+      const atrasado = !recebido && isMesAtual && dia < diaHoje;
+      map[pessoaId].modelos.push({ ...m, recebido, atrasado });
     });
-    // Sort: pendentes primeiro dentro de cada grupo
+    // Sort: atrasados primeiro, depois pendentes por dia, depois recebidos
     Object.values(map).forEach(g => {
       g.modelos.sort((a, b) => {
         if (a.recebido !== b.recebido) return a.recebido ? 1 : -1;
-        return a.descricao.localeCompare(b.descricao);
+        if (!a.recebido && !b.recebido) {
+          if (a.atrasado !== b.atrasado) return a.atrasado ? -1 : 1;
+        }
+        const diaA = a.dia_referencia ?? 99;
+        const diaB = b.dia_referencia ?? 99;
+        return diaA - diaB;
       });
     });
     return map;
-  }, [modelosAtivos, lancadosIds]);
+  }, [modelosAtivos, lancadosIds, isMesAtual, diaHoje]);
 
   const darBaixa = useCallback(async (modelo: Modelo, valorOverride?: number) => {
     if (!user) return;
@@ -218,7 +233,9 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
                       className={`flex items-center justify-between py-2 px-2 rounded-md transition-colors ${
                         modelo.recebido
                           ? 'bg-muted/50'
-                          : 'hover:bg-muted/30'
+                          : modelo.atrasado
+                            ? 'bg-destructive/10 animate-pulse'
+                            : 'hover:bg-muted/30'
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -227,14 +244,37 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
                             <Check className="h-3 w-3 text-primary" />
                           </div>
                         ) : (
-                          <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 shrink-0" />
+                          <div className={`h-5 w-5 rounded-full border-2 shrink-0 ${
+                            modelo.atrasado ? 'border-destructive' : 'border-muted-foreground/30'
+                          }`} />
                         )}
-                        <span className={`text-sm truncate ${modelo.recebido ? 'line-through text-muted-foreground' : ''}`}>
-                          {modelo.descricao}
-                        </span>
+                        <div className="flex flex-col min-w-0">
+                          <span className={`text-sm truncate ${
+                            modelo.recebido 
+                              ? 'line-through text-muted-foreground' 
+                              : modelo.atrasado 
+                                ? 'text-destructive font-medium' 
+                                : ''
+                          }`}>
+                            {modelo.descricao}
+                          </span>
+                          {modelo.dia_referencia && (
+                            <span className={`text-[10px] ${
+                              modelo.atrasado ? 'text-destructive' : 'text-muted-foreground'
+                            }`}>
+                              Dia {modelo.dia_referencia}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-sm font-semibold ${modelo.recebido ? 'text-muted-foreground' : ''}`}>
+                        <span className={`text-sm font-semibold ${
+                          modelo.recebido 
+                            ? 'text-muted-foreground' 
+                            : modelo.atrasado 
+                              ? 'text-destructive' 
+                              : ''
+                        }`}>
                           {Number(modelo.valor_padrao) > 0
                             ? formatCurrency(Number(modelo.valor_padrao))
                             : 'Variável'}
