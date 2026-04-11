@@ -53,13 +53,15 @@ export default function RecorrenciasPendentes({ modelos, lancamentosMes, mes, an
     [modelos]
   );
 
-  const lancadosIds = useMemo(() => {
-    const set = new Set<string>();
+  const lancadosMap = useMemo(() => {
+    const map = new Map<string, string>(); // modelo_id -> lancamento_id
     lancamentosMes.forEach(l => {
-      if (l.modelo_id) set.add(l.modelo_id);
+      if (l.modelo_id) map.set(l.modelo_id, l.id);
     });
-    return set;
+    return map;
   }, [lancamentosMes]);
+
+  const lancadosIds = useMemo(() => new Set(lancadosMap.keys()), [lancadosMap]);
 
   // Agrupar por pessoa
   const grupos = useMemo(() => {
