@@ -105,13 +105,15 @@ export default function Lancamentos() {
 
   const handleBulkStatusChange = async () => {
     if (selectedCount === 0) return;
-    const updates = selectedItems.map(l => ({
-      id: l.id,
-      status: l.tipo_lancamento === 'receita' ? 'recebido' : 'pago',
-      data_real: new Date().toISOString().split('T')[0],
-    }));
-    const { error } = await supabase.from('lancamentos').upsert(updates);
-    if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    const promises = selectedItems.map(l =>
+      supabase.from('lancamentos').update({
+        status: l.tipo_lancamento === 'receita' ? 'recebido' : 'pago',
+        data_real: new Date().toISOString().split('T')[0],
+      }).eq('id', l.id)
+    );
+    const results = await Promise.all(promises);
+    const errors = results.filter(r => r.error);
+    if (errors.length > 0) toast({ title: 'Erro', description: errors[0].error?.message, variant: 'destructive' });
     else {
       setSelectedIds(new Set());
       queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
