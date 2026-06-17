@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { Edit, Trash2, Copy, Check, Search } from 'lucide-react';
+import { Edit, Trash2, Copy, Check, Search, X } from 'lucide-react';
 
 const now = new Date();
 
@@ -30,6 +31,7 @@ export default function Lancamentos() {
   const [tipo, setTipo] = useState('');
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: pessoas = [] } = usePessoas();
@@ -42,6 +44,19 @@ export default function Lancamentos() {
     status: status || undefined,
     search: search || undefined,
   });
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectedItems = lancamentos.filter(l => selectedIds.has(l.id));
+  const selectedCount = selectedItems.length;
+  const selectedTotal = selectedItems.reduce((s, l) => s + Number(l.tipo_lancamento === 'receita' ? l.valor_liquido : l.valor_bruto), 0);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir este lançamento?')) return;
@@ -85,6 +100,24 @@ export default function Lancamentos() {
     else {
       queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
       toast({ title: 'Duplicado!' });
+    }
+  };
+
+  const handleBulkStatusChange = async () => {
+    if (selectedCount === 0) return;
+    const promises = selectedItems.map(l =>
+      supabase.from('lancamentos').update({
+        status: l.tipo_lancamento === 'receita' ? 'recebido' : 'pago',
+        data_real: new Date().toISOString().split('T')[0],
+      }).eq('id', l.id)
+    );
+    const results = await Promise.all(promises);
+    const errors = results.filter(r => r.error);
+    if (errors.length > 0) toast({ title: 'Erro', description: errors[0].error?.message, variant: 'destructive' });
+    else {
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
+      toast({ title: `${selectedCount} lançamento(s) atualizado(s)!` });
     }
   };
 
@@ -171,32 +204,39 @@ export default function Lancamentos() {
       ) : (
         <div className="space-y-2">
           {lancamentos.map(l => (
-            <Card key={l.id}>
+            <Card key={l.id} className={selectedIds.has(l.id) ? 'ring-2 ring-primary' : ''}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`h-2 w-2 rounded-full ${l.tipo_lancamento === 'receita' ? 'bg-emerald-500' : 'bg-destructive'}`} />
-                      <span className="font-medium text-sm truncate">{l.descricao}</span>
-                      <Badge variant="outline" className={`text-[10px] ${statusColors[l.status] || ''}`}>
-                        {l.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{l.pessoas?.nome}</span>
-                      <span>•</span>
-                      <span style={{ color: l.categorias?.cor || undefined }}>{l.categorias?.nome}</span>
-                      <span>•</span>
-                      <span>{formatDate(l.data_prevista)}</span>
-                    </div>
-                    {l.tipo_lancamento === 'receita' && (Number(l.valor_dizimo) > 0 || Number(l.valor_imposto) > 0 || Number(l.valor_gasolina) > 0) && (
-                      <div className="text-[10px] text-muted-foreground mt-1">
-                        Bruto: {formatCurrency(Number(l.valor_bruto))}
-                        {Number(l.valor_dizimo) > 0 && ` | Dízimo: -${formatCurrency(Number(l.valor_dizimo))}`}
-                        {Number(l.valor_imposto) > 0 && ` | Imp: -${formatCurrency(Number(l.valor_imposto))}`}
-                        {Number(l.valor_gasolina) > 0 && ` | Gas: -${formatCurrency(Number(l.valor_gasolina))}`}
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <Checkbox
+                      checked={selectedIds.has(l.id)}
+                      onCheckedChange={() => toggleSelection(l.id)}
+                      className="mt-1 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`h-2 w-2 rounded-full shrink-0 ${l.tipo_lancamento === 'receita' ? 'bg-emerald-500' : 'bg-destructive'}`} />
+                        <span className="font-medium text-sm truncate">{l.descricao}</span>
+                        <Badge variant="outline" className={`text-[10px] ${statusColors[l.status] || ''}`}>
+                          {l.status}
+                        </Badge>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{l.pessoas?.nome}</span>
+                        <span>•</span>
+                        <span style={{ color: l.categorias?.cor || undefined }}>{l.categorias?.nome}</span>
+                        <span>•</span>
+                        <span>{formatDate(l.data_prevista)}</span>
+                      </div>
+                      {l.tipo_lancamento === 'receita' && (Number(l.valor_dizimo) > 0 || Number(l.valor_imposto) > 0 || Number(l.valor_gasolina) > 0) && (
+                        <div className="text-[10px] text-muted-foreground mt-1">
+                          Bruto: {formatCurrency(Number(l.valor_bruto))}
+                          {Number(l.valor_dizimo) > 0 && ` | Dízimo: -${formatCurrency(Number(l.valor_dizimo))}`}
+                          {Number(l.valor_imposto) > 0 && ` | Imp: -${formatCurrency(Number(l.valor_imposto))}`}
+                          {Number(l.valor_gasolina) > 0 && ` | Gas: -${formatCurrency(Number(l.valor_gasolina))}`}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right shrink-0">
                     <p className={`font-bold text-sm ${l.tipo_lancamento === 'receita' ? 'text-emerald-600' : 'text-destructive'}`}>
@@ -223,6 +263,30 @@ export default function Lancamentos() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Bulk action floating bar */}
+      {selectedCount > 0 && (
+        <div className="fixed bottom-16 left-0 right-0 md:bottom-6 md:left-56 md:right-0 z-[55]">
+          <div className="mx-4 mb-2 md:mx-6 md:mb-0 bg-card border rounded-xl shadow-lg p-3 flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold truncate">
+                {selectedCount} selecionado{selectedCount > 1 ? 's' : ''}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {formatCurrency(selectedTotal)} no total
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setSelectedIds(new Set())}>
+                <X className="h-3 w-3 mr-1" /> Limpar
+              </Button>
+              <Button size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleBulkStatusChange}>
+                <Check className="h-3 w-3 mr-1" /> Marcar pago
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
