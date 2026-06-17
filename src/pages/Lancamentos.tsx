@@ -103,6 +103,22 @@ export default function Lancamentos() {
     }
   };
 
+  const handleBulkStatusChange = async () => {
+    if (selectedCount === 0) return;
+    const updates = selectedItems.map(l => ({
+      id: l.id,
+      status: l.tipo_lancamento === 'receita' ? 'recebido' : 'pago',
+      data_real: new Date().toISOString().split('T')[0],
+    }));
+    const { error } = await supabase.from('lancamentos').upsert(updates);
+    if (error) toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    else {
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
+      toast({ title: `${selectedCount} lançamento(s) atualizado(s)!` });
+    }
+  };
+
   const totalBruto = lancamentos.filter(l => l.tipo_lancamento === 'receita').reduce((s, l) => s + Number(l.valor_bruto), 0);
   const totalLiquido = lancamentos.filter(l => l.tipo_lancamento === 'receita').reduce((s, l) => s + Number(l.valor_liquido), 0);
   const totalDespesas = lancamentos.filter(l => l.tipo_lancamento === 'despesa').reduce((s, l) => s + Number(l.valor_bruto), 0);
