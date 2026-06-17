@@ -31,6 +31,7 @@ export default function Lancamentos() {
   const [tipo, setTipo] = useState('');
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: pessoas = [] } = usePessoas();
@@ -43,6 +44,19 @@ export default function Lancamentos() {
     status: status || undefined,
     search: search || undefined,
   });
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectedItems = lancamentos.filter(l => selectedIds.has(l.id));
+  const selectedCount = selectedItems.length;
+  const selectedTotal = selectedItems.reduce((s, l) => s + Number(l.tipo_lancamento === 'receita' ? l.valor_liquido : l.valor_bruto), 0);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir este lançamento?')) return;
