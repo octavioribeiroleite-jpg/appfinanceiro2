@@ -252,6 +252,53 @@ export default function Dashboard() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-12 w-12 rounded-2xl bg-card border-border/70 shrink-0"
+          onClick={() => {
+            if (mes === 1) { setMes(12); setAno(ano - 1); } else { setMes(mes - 1); }
+          }}
+          aria-label="Mês anterior"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-12 w-12 rounded-2xl bg-card border-border/70 shrink-0"
+          onClick={() => {
+            if (mes === 12) { setMes(1); setAno(ano + 1); } else { setMes(mes + 1); }
+          }}
+          aria-label="Próximo mês"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Quick month chips — últimos 6 meses */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-muted-foreground">Ir para:</span>
+        {Array.from({ length: 6 }).map((_, i) => {
+          const d = new Date(ano, mes - 1 - i, 1);
+          const m = d.getMonth() + 1;
+          const a = d.getFullYear();
+          const isActive = m === mes && a === ano;
+          const label = `${MESES[m - 1].substring(0, 3).toLowerCase()} de ${String(a).slice(-2)}`;
+          return (
+            <button
+              key={`${m}-${a}`}
+              onClick={() => { setMes(m); setAno(a); }}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                isActive
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-foreground border-border/70 hover:bg-muted'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* 1. Previsão Salarial */}
