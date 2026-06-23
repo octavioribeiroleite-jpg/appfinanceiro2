@@ -129,18 +129,25 @@ export default function Dashboard() {
   }, [lancamentosAno]);
 
   const chartMensal = useMemo(() => {
-    const mesesData: Record<number, { bruto: number; liquido: number }> = {};
+    const mesesData: Record<number, { bruto: number; liquido: number; qtd: number }> = {};
     lancamentosAno.filter(l => l.tipo_lancamento === 'receita').forEach(l => {
-      if (!mesesData[l.competencia_mes]) mesesData[l.competencia_mes] = { bruto: 0, liquido: 0 };
+      if (!mesesData[l.competencia_mes]) mesesData[l.competencia_mes] = { bruto: 0, liquido: 0, qtd: 0 };
       mesesData[l.competencia_mes].bruto += Number(l.valor_bruto);
       mesesData[l.competencia_mes].liquido += Number(l.valor_liquido);
+      mesesData[l.competencia_mes].qtd += 1;
     });
     return Array.from({ length: 12 }, (_, i) => ({
       mes: MESES[i].substring(0, 3),
       bruto: mesesData[i + 1]?.bruto || 0,
       liquido: mesesData[i + 1]?.liquido || 0,
+      qtd: mesesData[i + 1]?.qtd || 0,
     }));
   }, [lancamentosAno]);
+
+  const totalQtdAno = useMemo(
+    () => lancamentosAno.filter(l => l.tipo_lancamento === 'receita').length,
+    [lancamentosAno],
+  );
 
   const chartCategoria = useMemo(() => {
     const cats: Record<string, { nome: string; valor: number; cor: string }> = {};
