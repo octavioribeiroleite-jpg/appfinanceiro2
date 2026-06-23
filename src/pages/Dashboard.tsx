@@ -230,15 +230,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Hero header with verse + big month title (reference style) */}
-      <div className="space-y-2 pt-1">
-        <p className="text-sm italic text-muted-foreground">
+      {/* Hero header — compact (reference style) */}
+      <div className="space-y-1 pt-1">
+        <p className="text-xs italic text-muted-foreground">
           "Até aqui nos ajudou o Senhor" — 1 Samuel 7:12
         </p>
-        <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-primary capitalize leading-tight">
+        <h1 className="font-display text-2xl font-bold text-primary capitalize leading-tight">
           {MESES[mes - 1]} de {ano}
         </h1>
-        <p className="text-sm text-muted-foreground">Acompanhamento financeiro mensal</p>
       </div>
 
       {/* Month/year selector */}
