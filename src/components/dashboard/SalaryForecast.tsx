@@ -1,7 +1,14 @@
 import { formatCurrency } from '@/lib/format';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, CalendarClock } from 'lucide-react';
+import { TrendingUp, CalendarClock, User, Check } from 'lucide-react';
+
+interface PessoaPrevisao {
+  id: string;
+  nome: string;
+  previsao: number;
+  recebido: number;
+}
 
 interface Props {
   previsao: number;
@@ -9,9 +16,10 @@ interface Props {
   avulsos: number;
   mes?: number;
   ano?: number;
+  porPessoa?: PessoaPrevisao[];
 }
 
-export default function SalaryForecast({ previsao, recebidoRecorrente, avulsos, mes, ano }: Props) {
+export default function SalaryForecast({ previsao, recebidoRecorrente, avulsos, mes, ano, porPessoa = [] }: Props) {
   const totalMes = previsao + avulsos;
   const totalRecebido = recebidoRecorrente + avulsos;
   const restante = Math.max(totalMes - totalRecebido, 0);
@@ -26,59 +34,86 @@ export default function SalaryForecast({ previsao, recebidoRecorrente, avulsos, 
     : (currentMonth < now.getMonth() + 1 || currentYear < now.getFullYear()) ? lastDay : 0;
   const diasRestantes = Math.max(lastDay - today, 0);
 
+  const pessoasComPrevisao = porPessoa.filter(p => p.previsao > 0 || p.recebido > 0);
+
   return (
     <Card className="border-primary/20 bg-primary/5">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
+      <CardContent className="p-4 space-y-4">
+        {/* Header */}
+        <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
           <span className="text-sm font-semibold">Previsão Salarial do Mês</span>
         </div>
 
-        <div className="space-y-1 text-sm mb-3">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Recorrente (previsão)</span>
-            <span>{formatCurrency(previsao)}</span>
+        {/* Por pessoa */}
+        {pessoasComPrevisao.length > 0 && (
+          <div className="space-y-2">
+            {pessoasComPrevisao.map(p => {
+              const pct = p.previsao > 0 ? Math.min((p.recebido / p.previsao) * 100, 100) : (p.recebido > 0 ? 100 : 0);
+              const completo = p.previsao > 0 && p.recebido >= p.previsao;
+              return (
+                <div key={p.id} className="rounded-lg bg-card border p-3 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-semibold truncate">{p.nome}</span>
+                      {completo && <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />}
+                    </div>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {pct.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className={`text-base font-bold tabular-nums ${completo ? 'text-emerald-600' : 'text-primary'}`}>
+                      {formatCurrency(p.recebido)}
+                    </span>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      de {formatCurrency(p.previsao)}
+                    </span>
+                  </div>
+                  <Progress value={pct} className="h-1.5" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Total */}
+        <div className="space-y-2 pt-1 border-t">
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm font-semibold">Total do mês</span>
+            <span className="text-base font-bold text-primary tabular-nums">{formatCurrency(totalMes)}</span>
           </div>
           {avulsos > 0 && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">+ Avulsos</span>
-              <span className="text-green-600">+{formatCurrency(avulsos)}</span>
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Inclui avulsos</span>
+              <span className="text-emerald-600 tabular-nums">+{formatCurrency(avulsos)}</span>
             </div>
           )}
-          <div className="flex justify-between font-bold text-base pt-1 border-t">
-            <span>Total do mês</span>
-            <span className="text-primary">{formatCurrency(totalMes)}</span>
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs text-muted-foreground">Recebido</span>
+            <span className="text-sm font-bold text-primary tabular-nums">
+              {formatCurrency(totalRecebido)}
+            </span>
           </div>
-        </div>
-
-        <div className="flex items-baseline justify-between mb-1">
-          <span className="text-lg font-bold text-primary">
-            {formatCurrency(totalRecebido)}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            de {formatCurrency(totalMes)}
-          </span>
+          <Progress value={percent} className="h-2" />
+          <div className="flex justify-between">
+            <p className="text-xs text-muted-foreground">{percent.toFixed(0)}% recebido</p>
+            <p className="text-xs text-muted-foreground">
+              {diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Mês encerrado'}
+            </p>
+          </div>
         </div>
 
         {restante > 0 && (
-          <div className="flex items-center justify-between mb-2 px-2 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20">
+          <div className="flex items-center justify-between px-2 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20">
             <div className="flex items-center gap-1.5">
               <CalendarClock className="h-4 w-4 text-amber-600" />
               <span className="text-sm font-medium text-amber-700">Restante a receber</span>
             </div>
-            <span className="text-sm font-bold text-amber-700">{formatCurrency(restante)}</span>
+            <span className="text-sm font-bold text-amber-700 tabular-nums">{formatCurrency(restante)}</span>
           </div>
         )}
-
-        <Progress value={percent} className="h-2.5" />
-        <div className="flex justify-between mt-1.5">
-          <p className="text-xs text-muted-foreground">
-            {percent.toFixed(0)}% recebido
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {diasRestantes > 0 ? `${diasRestantes} dias restantes` : 'Mês encerrado'}
-          </p>
-        </div>
       </CardContent>
     </Card>
   );
