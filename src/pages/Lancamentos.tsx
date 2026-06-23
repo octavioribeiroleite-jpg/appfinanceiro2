@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import PageHeader from '@/components/PageHeader';
 import { useLancamentos, usePessoas, useCategorias } from '@/hooks/useFinanceData';
 import { formatCurrency, formatDate, MESES } from '@/lib/format';
