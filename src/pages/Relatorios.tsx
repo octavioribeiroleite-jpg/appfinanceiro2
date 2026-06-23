@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import PageHeader from '@/components/PageHeader';
 import { useLancamentos, useLancamentosAno, usePessoas } from '@/hooks/useFinanceData';
 import { formatCurrency, MESES } from '@/lib/format';
