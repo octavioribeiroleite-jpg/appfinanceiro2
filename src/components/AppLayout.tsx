@@ -56,9 +56,33 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
           <span className="font-bold text-lg hidden sm:inline">Controle Financeiro</span>
         </Link>
-        <Button variant="ghost" size="icon" onClick={signOut}>
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Buscar atualização"
+            onClick={async () => {
+              try {
+                if ('caches' in window) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map(k => caches.delete(k)));
+                }
+                if ('serviceWorker' in navigator) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  await Promise.all(regs.map(r => r.unregister()));
+                }
+              } catch {}
+              const url = new URL(window.location.href);
+              url.searchParams.set('_r', Date.now().toString());
+              window.location.replace(url.toString());
+            }}
+          >
+            <RotateCw className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={signOut}>
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       {/* Content */}
