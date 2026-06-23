@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import PageHeader from '@/components/PageHeader';
 import { useLancamentos, usePessoas, useCategorias } from '@/hooks/useFinanceData';
 import { formatCurrency, formatDate, MESES } from '@/lib/format';
@@ -24,9 +24,10 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Lancamentos() {
-  const [mes, setMes] = useState(now.getMonth() + 1);
-  const [ano, setAno] = useState(now.getFullYear());
-  const [pessoaId, setPessoaId] = useState('');
+  const [searchParams] = useSearchParams();
+  const [mes, setMes] = useState(Number(searchParams.get('mes')) || now.getMonth() + 1);
+  const [ano, setAno] = useState(Number(searchParams.get('ano')) || now.getFullYear());
+  const [pessoaId, setPessoaId] = useState(searchParams.get('pessoa') || '');
   const [categoriaId, setCategoriaId] = useState('');
   const [tipo, setTipo] = useState('');
   const [status, setStatus] = useState('');
@@ -37,6 +38,15 @@ export default function Lancamentos() {
   const navigate = useNavigate();
   const { data: pessoas = [] } = usePessoas();
   const { data: categorias = [] } = useCategorias();
+
+  useEffect(() => {
+    const p = searchParams.get('pessoa');
+    const m = searchParams.get('mes');
+    const a = searchParams.get('ano');
+    if (p !== null) setPessoaId(p);
+    if (m) setMes(Number(m));
+    if (a) setAno(Number(a));
+  }, [searchParams]);
 
   const { data: lancamentos = [], isLoading } = useLancamentos(mes, ano, {
     pessoa_id: pessoaId || undefined,
