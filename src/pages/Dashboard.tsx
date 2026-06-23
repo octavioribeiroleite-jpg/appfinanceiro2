@@ -441,9 +441,9 @@ export default function Dashboard() {
       <Card className="rounded-3xl border-border/60">
         <CardHeader className="pb-3">
           <div className="flex items-end justify-between gap-2">
-            <CardTitle className="text-lg font-bold">Receitas {ano}</CardTitle>
+            <CardTitle className="text-base font-bold">Faturamento {ano}</CardTitle>
             <span className="text-xs text-muted-foreground">
-              {chartMensal.filter(m => m.bruto > 0).length} meses ·{' '}
+              {totalQtdAno} lançamentos ·{' '}
               <span className="font-semibold text-foreground">{formatCurrency(resumoAno.bruto)}</span>
             </span>
           </div>
@@ -452,7 +452,7 @@ export default function Dashboard() {
           {(() => {
             const max = Math.max(...chartMensal.map(m => m.bruto), 1);
             return (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {chartMensal.map((m, i) => {
                   const isActive = i === mes - 1;
                   const pct = (m.bruto / max) * 100;
@@ -461,18 +461,21 @@ export default function Dashboard() {
                     <button
                       key={i}
                       onClick={() => setMes(i + 1)}
-                      className="w-full grid grid-cols-[42px_1fr_auto] items-center gap-3 group"
+                      className="w-full grid grid-cols-[36px_1fr_40px_84px] items-center gap-2"
                     >
-                      <span className={`text-sm text-left ${isActive ? 'font-bold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
+                      <span className={`text-xs text-left ${isActive ? 'font-bold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
                         {MESES[i].substring(0, 3)}
                       </span>
-                      <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${isActive ? 'bg-primary' : 'bg-accent'}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className={`text-sm tabular-nums text-right min-w-[88px] ${isActive ? 'font-bold text-primary' : hasValue ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                      <span className={`text-xs tabular-nums text-right ${isActive ? 'font-semibold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
+                        {hasValue ? `${m.qtd}x` : '—'}
+                      </span>
+                      <span className={`text-xs tabular-nums text-right ${isActive ? 'font-bold text-primary' : hasValue ? 'text-foreground' : 'text-muted-foreground/50'}`}>
                         {hasValue ? formatCurrency(m.bruto) : '—'}
                       </span>
                     </button>
