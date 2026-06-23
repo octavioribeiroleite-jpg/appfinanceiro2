@@ -129,18 +129,25 @@ export default function Dashboard() {
   }, [lancamentosAno]);
 
   const chartMensal = useMemo(() => {
-    const mesesData: Record<number, { bruto: number; liquido: number }> = {};
+    const mesesData: Record<number, { bruto: number; liquido: number; qtd: number }> = {};
     lancamentosAno.filter(l => l.tipo_lancamento === 'receita').forEach(l => {
-      if (!mesesData[l.competencia_mes]) mesesData[l.competencia_mes] = { bruto: 0, liquido: 0 };
+      if (!mesesData[l.competencia_mes]) mesesData[l.competencia_mes] = { bruto: 0, liquido: 0, qtd: 0 };
       mesesData[l.competencia_mes].bruto += Number(l.valor_bruto);
       mesesData[l.competencia_mes].liquido += Number(l.valor_liquido);
+      mesesData[l.competencia_mes].qtd += 1;
     });
     return Array.from({ length: 12 }, (_, i) => ({
       mes: MESES[i].substring(0, 3),
       bruto: mesesData[i + 1]?.bruto || 0,
       liquido: mesesData[i + 1]?.liquido || 0,
+      qtd: mesesData[i + 1]?.qtd || 0,
     }));
   }, [lancamentosAno]);
+
+  const totalQtdAno = useMemo(
+    () => lancamentosAno.filter(l => l.tipo_lancamento === 'receita').length,
+    [lancamentosAno],
+  );
 
   const chartCategoria = useMemo(() => {
     const cats: Record<string, { nome: string; valor: number; cor: string }> = {};
@@ -223,21 +230,31 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Hero header with verse + big month title (reference style) */}
-      <div className="space-y-2 pt-1">
-        <p className="text-sm italic text-muted-foreground">
+      {/* Hero header — compact (reference style) */}
+      <div className="space-y-1 pt-1">
+        <p className="text-xs italic text-muted-foreground">
           "Até aqui nos ajudou o Senhor" — 1 Samuel 7:12
         </p>
-        <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-primary capitalize leading-tight">
+        <h1 className="font-display text-2xl font-bold text-primary capitalize leading-tight">
           {MESES[mes - 1]} de {ano}
         </h1>
-        <p className="text-sm text-muted-foreground">Acompanhamento financeiro mensal</p>
       </div>
 
       {/* Month/year selector */}
       <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 rounded-xl bg-card border-border/70 shrink-0"
+          onClick={() => {
+            if (mes === 1) { setMes(12); setAno(ano - 1); } else { setMes(mes - 1); }
+          }}
+          aria-label="Mês anterior"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
         <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
-          <SelectTrigger className="flex-1 bg-card border-border/70 rounded-2xl h-12"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="flex-1 bg-card border-border/70 rounded-xl h-10 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             {MESES.map((m, i) => (
               <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
@@ -245,7 +262,7 @@ export default function Dashboard() {
           </SelectContent>
         </Select>
         <Select value={String(ano)} onValueChange={v => setAno(Number(v))}>
-          <SelectTrigger className="w-24 bg-card border-border/70 rounded-2xl h-12"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-20 bg-card border-border/70 rounded-xl h-10 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             {[2024, 2025, 2026, 2027].map(a => (
               <SelectItem key={a} value={String(a)}>{a}</SelectItem>
@@ -255,18 +272,7 @@ export default function Dashboard() {
         <Button
           variant="outline"
           size="icon"
-          className="h-12 w-12 rounded-2xl bg-card border-border/70 shrink-0"
-          onClick={() => {
-            if (mes === 1) { setMes(12); setAno(ano - 1); } else { setMes(mes - 1); }
-          }}
-          aria-label="Mês anterior"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-12 w-12 rounded-2xl bg-card border-border/70 shrink-0"
+          className="h-10 w-10 rounded-xl bg-card border-border/70 shrink-0"
           onClick={() => {
             if (mes === 12) { setMes(1); setAno(ano + 1); } else { setMes(mes + 1); }
           }}
@@ -382,19 +388,26 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 4. Cards financeiros do mês */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {cards.map((c, i) => (
-          <Card key={c.title} className={i === cards.length - 1 ? 'col-span-2 sm:col-span-1' : ''}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <c.icon className={`h-4 w-4 ${c.color}`} />
-                <span className="text-xs text-muted-foreground">{c.title}</span>
-              </div>
-              <p className={`text-lg font-bold ${c.color}`}>{formatCurrency(c.value)}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* 4. Cards financeiros do mês — compactos estilo referência */}
+      <div className="grid grid-cols-2 gap-3">
+        {cards.map((c, i) => {
+          const highlight = c.title === 'Líquido';
+          return (
+            <Card
+              key={c.title}
+              className={`rounded-2xl border-border/60 shadow-none ${highlight ? 'bg-accent/40' : 'bg-card'} ${i === cards.length - 1 ? 'col-span-2' : ''}`}
+            >
+              <CardContent className="p-3.5">
+                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  {c.title}
+                </p>
+                <p className={`mt-1 text-xl font-bold tabular-nums ${highlight ? 'text-primary' : 'text-foreground'}`}>
+                  {formatCurrency(c.value)}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* 5. Investimento */}
@@ -428,9 +441,9 @@ export default function Dashboard() {
       <Card className="rounded-3xl border-border/60">
         <CardHeader className="pb-3">
           <div className="flex items-end justify-between gap-2">
-            <CardTitle className="text-lg font-bold">Receitas {ano}</CardTitle>
+            <CardTitle className="text-base font-bold">Faturamento {ano}</CardTitle>
             <span className="text-xs text-muted-foreground">
-              {chartMensal.filter(m => m.bruto > 0).length} meses ·{' '}
+              {totalQtdAno} lançamentos ·{' '}
               <span className="font-semibold text-foreground">{formatCurrency(resumoAno.bruto)}</span>
             </span>
           </div>
@@ -439,7 +452,7 @@ export default function Dashboard() {
           {(() => {
             const max = Math.max(...chartMensal.map(m => m.bruto), 1);
             return (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {chartMensal.map((m, i) => {
                   const isActive = i === mes - 1;
                   const pct = (m.bruto / max) * 100;
@@ -448,18 +461,21 @@ export default function Dashboard() {
                     <button
                       key={i}
                       onClick={() => setMes(i + 1)}
-                      className="w-full grid grid-cols-[42px_1fr_auto] items-center gap-3 group"
+                      className="w-full grid grid-cols-[36px_1fr_40px_84px] items-center gap-2"
                     >
-                      <span className={`text-sm text-left ${isActive ? 'font-bold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
+                      <span className={`text-xs text-left ${isActive ? 'font-bold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
                         {MESES[i].substring(0, 3)}
                       </span>
-                      <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${isActive ? 'bg-primary' : 'bg-accent'}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className={`text-sm tabular-nums text-right min-w-[88px] ${isActive ? 'font-bold text-primary' : hasValue ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                      <span className={`text-xs tabular-nums text-right ${isActive ? 'font-semibold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
+                        {hasValue ? `${m.qtd}x` : '—'}
+                      </span>
+                      <span className={`text-xs tabular-nums text-right ${isActive ? 'font-bold text-primary' : hasValue ? 'text-foreground' : 'text-muted-foreground/50'}`}>
                         {hasValue ? formatCurrency(m.bruto) : '—'}
                       </span>
                     </button>
