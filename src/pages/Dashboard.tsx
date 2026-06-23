@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   TrendingUp, TrendingDown, Church, Receipt, Fuel,
-  Wallet, ArrowUpRight, Plus,
+  Wallet, ArrowUpRight, Plus, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -252,6 +252,53 @@ export default function Dashboard() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-12 w-12 rounded-2xl bg-card border-border/70 shrink-0"
+          onClick={() => {
+            if (mes === 1) { setMes(12); setAno(ano - 1); } else { setMes(mes - 1); }
+          }}
+          aria-label="Mês anterior"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-12 w-12 rounded-2xl bg-card border-border/70 shrink-0"
+          onClick={() => {
+            if (mes === 12) { setMes(1); setAno(ano + 1); } else { setMes(mes + 1); }
+          }}
+          aria-label="Próximo mês"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Quick month chips — últimos 6 meses */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-muted-foreground">Ir para:</span>
+        {Array.from({ length: 6 }).map((_, i) => {
+          const d = new Date(ano, mes - 1 - i, 1);
+          const m = d.getMonth() + 1;
+          const a = d.getFullYear();
+          const isActive = m === mes && a === ano;
+          const label = `${MESES[m - 1].substring(0, 3).toLowerCase()} de ${String(a).slice(-2)}`;
+          return (
+            <button
+              key={`${m}-${a}`}
+              onClick={() => { setMes(m); setAno(a); }}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                isActive
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-foreground border-border/70 hover:bg-muted'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* 1. Previsão Salarial */}
@@ -377,47 +424,75 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Evolução Mensal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={chartMensal}>
-                <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                <Bar dataKey="bruto" fill="hsl(217, 91%, 60%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="liquido" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Receitas por mês — estilo lista (referência) */}
+      <Card className="rounded-3xl border-border/60">
+        <CardHeader className="pb-3">
+          <div className="flex items-end justify-between gap-2">
+            <CardTitle className="text-lg font-bold">Receitas {ano}</CardTitle>
+            <span className="text-xs text-muted-foreground">
+              {chartMensal.filter(m => m.bruto > 0).length} meses ·{' '}
+              <span className="font-semibold text-foreground">{formatCurrency(resumoAno.bruto)}</span>
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="pb-4">
+          {(() => {
+            const max = Math.max(...chartMensal.map(m => m.bruto), 1);
+            return (
+              <div className="space-y-2.5">
+                {chartMensal.map((m, i) => {
+                  const isActive = i === mes - 1;
+                  const pct = (m.bruto / max) * 100;
+                  const hasValue = m.bruto > 0;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setMes(i + 1)}
+                      className="w-full grid grid-cols-[42px_1fr_auto] items-center gap-3 group"
+                    >
+                      <span className={`text-sm text-left ${isActive ? 'font-bold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
+                        {MESES[i].substring(0, 3)}
+                      </span>
+                      <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${isActive ? 'bg-primary' : 'bg-accent'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className={`text-sm tabular-nums text-right min-w-[88px] ${isActive ? 'font-bold text-primary' : hasValue ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                        {hasValue ? formatCurrency(m.bruto) : '—'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Receitas por Categoria</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {chartCategoria.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={chartCategoria} dataKey="valor" nameKey="nome" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
-                    {chartCategoria.map((entry, i) => (
-                      <Cell key={i} fill={entry.cor} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-muted-foreground py-8 text-sm">Nenhuma receita neste mês</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Receitas por Categoria (pizza) */}
+      <Card className="rounded-3xl border-border/60">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Receitas por Categoria</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {chartCategoria.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={chartCategoria} dataKey="valor" nameKey="nome" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
+                  {chartCategoria.map((entry, i) => (
+                    <Cell key={i} fill={entry.cor} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => formatCurrency(v)} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-center text-muted-foreground py-8 text-sm">Nenhuma receita neste mês</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Category Group Dialog — mostra lançamentos reais */}
       <CategoryGroupDialog
