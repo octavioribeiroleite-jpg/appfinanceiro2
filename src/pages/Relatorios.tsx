@@ -178,7 +178,11 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
                 <CollapsibleContent>
                   <div className="border-t px-4 pb-3 pt-2 space-y-1.5">
                     {c.lancamentos.sort((a: any, b: any) => (a.descricao || '').localeCompare(b.descricao || '')).map((l: any) => (
-                      <div key={l.id} className="flex items-center justify-between text-xs py-1 border-b last:border-0">
+                      <Link
+                        key={l.id}
+                        to={`/novo?edit=${l.id}`}
+                        className="flex items-center justify-between text-xs py-1.5 border-b last:border-0 -mx-1 px-1 rounded hover:bg-accent/50 active:bg-accent transition-colors"
+                      >
                         <span className="truncate mr-2">{l.descricao}</span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="font-medium">{formatCurrency(Number(l.valor_bruto))}</span>
@@ -186,7 +190,7 @@ function PessoaReport({ lancamentos, nome }: { lancamentos: any[]; nome: string 
                             {l.status === 'recebido' ? '✅' : '⏳'}
                           </span>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </CollapsibleContent>
