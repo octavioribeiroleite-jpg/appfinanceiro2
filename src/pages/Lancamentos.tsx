@@ -213,8 +213,13 @@ export default function Lancamentos() {
                       checked={selectedIds.has(l.id)}
                       onCheckedChange={() => toggleSelection(l.id)}
                       className="mt-1 shrink-0"
+                      onClick={(e) => e.stopPropagation()}
                     />
-                    <div className="min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/novo?edit=${l.id}`)}
+                      className="min-w-0 text-left flex-1 cursor-pointer"
+                    >
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`h-2 w-2 rounded-full shrink-0 ${l.tipo_lancamento === 'receita' ? 'bg-emerald-500' : 'bg-destructive'}`} />
                         <span className="font-medium text-sm truncate">{l.descricao}</span>
@@ -237,13 +242,18 @@ export default function Lancamentos() {
                           {Number(l.valor_gasolina) > 0 && ` | Gas: -${formatCurrency(Number(l.valor_gasolina))}`}
                         </div>
                       )}
-                    </div>
+                    </button>
                   </div>
-                  <div className="text-right shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/novo?edit=${l.id}`)}
+                    className="text-right shrink-0 cursor-pointer"
+                  >
                     <p className={`font-bold text-sm ${l.tipo_lancamento === 'receita' ? 'text-emerald-600' : 'text-destructive'}`}>
                       {l.tipo_lancamento === 'receita' ? '' : '-'}{formatCurrency(Number(l.tipo_lancamento === 'receita' ? l.valor_liquido : l.valor_bruto))}
                     </p>
-                  </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">toque para editar</p>
+                  </button>
                 </div>
                 <div className="flex gap-1 mt-2 justify-end">
                   {l.status === 'pendente' && (
