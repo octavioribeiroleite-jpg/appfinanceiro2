@@ -53,17 +53,28 @@ export default function SalaryForecast({ previsao, recebidoRecorrente, avulsos, 
             {pessoasComPrevisao.map(p => {
               const pct = p.previsao > 0 ? Math.min((p.recebido / p.previsao) * 100, 100) : (p.recebido > 0 ? 100 : 0);
               const completo = p.previsao > 0 && p.recebido >= p.previsao;
+              const params = new URLSearchParams({ pessoa: p.id });
+              if (mes) params.set('mes', String(mes));
+              if (ano) params.set('ano', String(ano));
               return (
-                <div key={p.id} className="rounded-lg bg-card border p-3 space-y-1.5">
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => navigate(`/lancamentos?${params.toString()}`)}
+                  className="w-full text-left rounded-lg bg-card border p-3 space-y-1.5 hover:bg-accent/50 active:bg-accent transition-colors"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       <span className="text-sm font-semibold truncate">{p.nome}</span>
                       {completo && <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />}
                     </div>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {pct.toFixed(0)}%
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {pct.toFixed(0)}%
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
                   </div>
                   <div className="flex items-baseline justify-between gap-2">
                     <span className={`text-base font-bold tabular-nums ${completo ? 'text-emerald-600' : 'text-primary'}`}>
@@ -74,7 +85,7 @@ export default function SalaryForecast({ previsao, recebidoRecorrente, avulsos, 
                     </span>
                   </div>
                   <Progress value={pct} className="h-1.5" />
-                </div>
+                </button>
               );
             })}
           </div>
