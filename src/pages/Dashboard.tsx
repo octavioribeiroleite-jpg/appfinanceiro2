@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   TrendingUp, TrendingDown, Church, Receipt, Fuel,
-  Wallet, ArrowUpRight, Plus,
+  Wallet, ArrowUpRight, Plus, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
