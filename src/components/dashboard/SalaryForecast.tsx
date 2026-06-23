@@ -1,7 +1,8 @@
 import { formatCurrency } from '@/lib/format';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, CalendarClock, User, Check } from 'lucide-react';
+import { TrendingUp, CalendarClock, User, Check, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface PessoaPrevisao {
   id: string;
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function SalaryForecast({ previsao, recebidoRecorrente, avulsos, mes, ano, porPessoa = [] }: Props) {
+  const navigate = useNavigate();
   const totalMes = previsao + avulsos;
   const totalRecebido = recebidoRecorrente + avulsos;
   const restante = Math.max(totalMes - totalRecebido, 0);
