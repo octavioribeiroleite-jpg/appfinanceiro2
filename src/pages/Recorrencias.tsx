@@ -200,23 +200,32 @@ export default function Recorrencias() {
         <div className="space-y-4">
           {pessoas.filter(p => p.tipo !== 'familia').map(pessoa => {
             const pessoaModelos = modelos.filter((m: any) => m.pessoa_id === pessoa.id);
+            const ativos = pessoaModelos.filter((m: any) => m.ativo);
+            const totalAtivo = ativos.reduce((s: number, m: any) => s + Number(m.valor_padrao || 0), 0);
             return (
-              <Collapsible key={pessoa.id} defaultOpen={pessoaModelos.length > 0}>
+              <Collapsible key={pessoa.id} defaultOpen={false}>
                 <Card>
-                  <CollapsibleTrigger className="w-full">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CollapsibleTrigger className="w-full group">
+                    <CardContent className="p-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <User className="h-5 w-5 text-primary" />
                         </div>
-                        <div className="text-left">
-                          <p className="font-semibold">{pessoa.nome}</p>
+                        <div className="text-left min-w-0">
+                          <p className="font-semibold truncate">{pessoa.nome}</p>
                           <p className="text-xs text-muted-foreground">
-                            {pessoaModelos.length} recorrência{pessoaModelos.length !== 1 ? 's' : ''}
+                            {ativos.length} ativa{ativos.length !== 1 ? 's' : ''}
+                            {pessoaModelos.length !== ativos.length && ` • ${pessoaModelos.length} total`}
                           </p>
                         </div>
                       </div>
-                      <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform" />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="text-right">
+                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total mês</p>
+                          <p className="font-bold text-primary text-sm">{formatCurrency(totalAtivo)}</p>
+                        </div>
+                        <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                      </div>
                     </CardContent>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
