@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/format';
+import { Link } from 'react-router-dom';
 
 interface Lancamento {
   id: string;
