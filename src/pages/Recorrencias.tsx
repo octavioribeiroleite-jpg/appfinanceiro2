@@ -182,7 +182,7 @@ export default function Recorrencias() {
               </div>
               <div className="space-y-2">
                 <Label>Dia Pagamento</Label>
-                <Input type="number" min="1" max="28" value={form.dia_referencia} onChange={e => setForm(f => ({ ...f, dia_referencia: parseInt(e.target.value) || 1 }))} />
+                <Input type="number" min="1" max="28" value={form.dia_referencia ?? ''} onChange={e => { const v = e.target.value; setForm(f => ({ ...f, dia_referencia: v === '' ? ('' as any) : Math.min(28, Math.max(1, parseInt(v) || 1)) })); }} onBlur={e => { if (!e.target.value) setForm(f => ({ ...f, dia_referencia: 1 })); }} />
               </div>
             </div>
             <div className="flex items-center gap-2">
