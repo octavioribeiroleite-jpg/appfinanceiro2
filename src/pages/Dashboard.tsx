@@ -247,7 +247,7 @@ export default function Dashboard() {
       </div>
 
       {/* 1. Previsão Salarial */}
-      <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} mes={mes} ano={ano} />
+      <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} mes={mes} ano={ano} porPessoa={porPessoa} />
 
       {/* 2. Recorrências Pendentes */}
       <RecorrenciasPendentes modelos={modelos} lancamentosMes={lancamentosMes} mes={mes} ano={ano} />
