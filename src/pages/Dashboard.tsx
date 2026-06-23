@@ -517,6 +517,7 @@ export default function Dashboard() {
       <CategoryGroupDialog
         open={!!categoriaAberta && !!categoriaAbertaData}
         onOpenChange={open => !open && setCategoriaAberta(null)}
+        categoriaId={categoriaAberta || undefined}
         categoriaNome={categoriaAbertaData?.nome || ''}
         categoriaCor={categoriaAbertaData?.cor || '#888'}
         lancamentos={categoriaAbertaData?.items || []}
