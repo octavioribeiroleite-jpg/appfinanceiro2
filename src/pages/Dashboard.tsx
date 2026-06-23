@@ -242,8 +242,19 @@ export default function Dashboard() {
 
       {/* Month/year selector */}
       <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 rounded-xl bg-card border-border/70 shrink-0"
+          onClick={() => {
+            if (mes === 1) { setMes(12); setAno(ano - 1); } else { setMes(mes - 1); }
+          }}
+          aria-label="Mês anterior"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
         <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
-          <SelectTrigger className="flex-1 bg-card border-border/70 rounded-2xl h-12"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="flex-1 bg-card border-border/70 rounded-xl h-10 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             {MESES.map((m, i) => (
               <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
@@ -251,7 +262,7 @@ export default function Dashboard() {
           </SelectContent>
         </Select>
         <Select value={String(ano)} onValueChange={v => setAno(Number(v))}>
-          <SelectTrigger className="w-24 bg-card border-border/70 rounded-2xl h-12"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-20 bg-card border-border/70 rounded-xl h-10 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             {[2024, 2025, 2026, 2027].map(a => (
               <SelectItem key={a} value={String(a)}>{a}</SelectItem>
@@ -261,18 +272,7 @@ export default function Dashboard() {
         <Button
           variant="outline"
           size="icon"
-          className="h-12 w-12 rounded-2xl bg-card border-border/70 shrink-0"
-          onClick={() => {
-            if (mes === 1) { setMes(12); setAno(ano - 1); } else { setMes(mes - 1); }
-          }}
-          aria-label="Mês anterior"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-12 w-12 rounded-2xl bg-card border-border/70 shrink-0"
+          className="h-10 w-10 rounded-xl bg-card border-border/70 shrink-0"
           onClick={() => {
             if (mes === 12) { setMes(1); setAno(ano + 1); } else { setMes(mes + 1); }
           }}
