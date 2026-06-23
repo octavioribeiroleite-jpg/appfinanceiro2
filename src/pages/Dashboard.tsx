@@ -388,19 +388,26 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 4. Cards financeiros do mês */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {cards.map((c, i) => (
-          <Card key={c.title} className={i === cards.length - 1 ? 'col-span-2 sm:col-span-1' : ''}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <c.icon className={`h-4 w-4 ${c.color}`} />
-                <span className="text-xs text-muted-foreground">{c.title}</span>
-              </div>
-              <p className={`text-lg font-bold ${c.color}`}>{formatCurrency(c.value)}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* 4. Cards financeiros do mês — compactos estilo referência */}
+      <div className="grid grid-cols-2 gap-3">
+        {cards.map((c, i) => {
+          const highlight = c.title === 'Líquido';
+          return (
+            <Card
+              key={c.title}
+              className={`rounded-2xl border-border/60 shadow-none ${highlight ? 'bg-accent/40' : 'bg-card'} ${i === cards.length - 1 ? 'col-span-2' : ''}`}
+            >
+              <CardContent className="p-3.5">
+                <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  {c.title}
+                </p>
+                <p className={`mt-1 text-xl font-bold tabular-nums ${highlight ? 'text-primary' : 'text-foreground'}`}>
+                  {formatCurrency(c.value)}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* 5. Investimento */}
