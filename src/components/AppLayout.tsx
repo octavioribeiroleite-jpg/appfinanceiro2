@@ -14,6 +14,7 @@ import {
   Sliders,
   Menu,
   X,
+  RotateCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
