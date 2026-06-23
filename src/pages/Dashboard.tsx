@@ -310,8 +310,82 @@ export default function Dashboard() {
       {/* 1. Previsão Salarial */}
       <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} mes={mes} ano={ano} porPessoa={porPessoa} />
 
+      {/* Resumo anual */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Resumo {ano}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
+            {[
+              { label: 'Bruto', val: resumoAno.bruto },
+              { label: 'Líquido', val: resumoAno.liquido },
+              { label: 'Dízimo', val: resumoAno.dizimo },
+              { label: 'Imposto', val: resumoAno.imposto },
+              { label: 'Gasolina', val: resumoAno.gasolina },
+            ].map(item => (
+              <div key={item.label}>
+                <p className="text-muted-foreground text-xs">{item.label}</p>
+                <p className="font-semibold">{formatCurrency(item.val)}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Faturamento anual — estilo lista (referência) */}
+      <Card className="rounded-3xl border-border/60">
+        <CardHeader className="pb-3">
+          <div className="flex items-end justify-between gap-2">
+            <CardTitle className="text-base font-bold">Faturamento {ano}</CardTitle>
+            <span className="text-xs text-muted-foreground">
+              {totalQtdAno} lançamentos ·{' '}
+              <span className="font-semibold text-foreground">{formatCurrency(resumoAno.bruto)}</span>
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="pb-4">
+          {(() => {
+            const max = Math.max(...chartMensal.map(m => m.bruto), 1);
+            return (
+              <div className="space-y-2">
+                {chartMensal.map((m, i) => {
+                  const isActive = i === mes - 1;
+                  const pct = (m.bruto / max) * 100;
+                  const hasValue = m.bruto > 0;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setMes(i + 1)}
+                      className="w-full grid grid-cols-[36px_1fr_40px_84px] items-center gap-2"
+                    >
+                      <span className={`text-xs text-left ${isActive ? 'font-bold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
+                        {MESES[i].substring(0, 3)}
+                      </span>
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${isActive ? 'bg-primary' : 'bg-accent'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs tabular-nums text-right ${isActive ? 'font-semibold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
+                        {hasValue ? `${m.qtd}x` : '—'}
+                      </span>
+                      <span className={`text-xs tabular-nums text-right ${isActive ? 'font-bold text-primary' : hasValue ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                        {hasValue ? formatCurrency(m.bruto) : '—'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
       {/* 2. Recorrências Pendentes */}
       <RecorrenciasPendentes modelos={modelos} lancamentosMes={lancamentosMes} mes={mes} ano={ano} />
+
 
       {/* 3. Atalhos Rápidos — botões individuais para lançamento rápido */}
       <div className="space-y-2">
@@ -414,78 +488,7 @@ export default function Dashboard() {
       <InvestmentCard liquidoMes={resumoMes.liquido} />
 
 
-      {/* 7. Resumo anual */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Resumo {ano}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
-            {[
-              { label: 'Bruto', val: resumoAno.bruto },
-              { label: 'Líquido', val: resumoAno.liquido },
-              { label: 'Dízimo', val: resumoAno.dizimo },
-              { label: 'Imposto', val: resumoAno.imposto },
-              { label: 'Gasolina', val: resumoAno.gasolina },
-            ].map(item => (
-              <div key={item.label}>
-                <p className="text-muted-foreground text-xs">{item.label}</p>
-                <p className="font-semibold">{formatCurrency(item.val)}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Receitas por mês — estilo lista (referência) */}
-      <Card className="rounded-3xl border-border/60">
-        <CardHeader className="pb-3">
-          <div className="flex items-end justify-between gap-2">
-            <CardTitle className="text-base font-bold">Faturamento {ano}</CardTitle>
-            <span className="text-xs text-muted-foreground">
-              {totalQtdAno} lançamentos ·{' '}
-              <span className="font-semibold text-foreground">{formatCurrency(resumoAno.bruto)}</span>
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="pb-4">
-          {(() => {
-            const max = Math.max(...chartMensal.map(m => m.bruto), 1);
-            return (
-              <div className="space-y-2">
-                {chartMensal.map((m, i) => {
-                  const isActive = i === mes - 1;
-                  const pct = (m.bruto / max) * 100;
-                  const hasValue = m.bruto > 0;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => setMes(i + 1)}
-                      className="w-full grid grid-cols-[36px_1fr_40px_84px] items-center gap-2"
-                    >
-                      <span className={`text-xs text-left ${isActive ? 'font-bold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
-                        {MESES[i].substring(0, 3)}
-                      </span>
-                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${isActive ? 'bg-primary' : 'bg-accent'}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <span className={`text-xs tabular-nums text-right ${isActive ? 'font-semibold text-foreground' : 'text-muted-foreground'} ${!hasValue ? 'opacity-40' : ''}`}>
-                        {hasValue ? `${m.qtd}x` : '—'}
-                      </span>
-                      <span className={`text-xs tabular-nums text-right ${isActive ? 'font-bold text-primary' : hasValue ? 'text-foreground' : 'text-muted-foreground/50'}`}>
-                        {hasValue ? formatCurrency(m.bruto) : '—'}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })()}
-        </CardContent>
-      </Card>
 
       {/* Receitas por Categoria (pizza) */}
       <Card className="rounded-3xl border-border/60">
