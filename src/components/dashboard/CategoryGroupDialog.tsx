@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/format';
+import { Link } from 'react-router-dom';
 
 interface Lancamento {
   id: string;
@@ -43,9 +44,11 @@ export default function CategoryGroupDialog({
 
         <div className="space-y-2">
           {lancamentos.map(l => (
-            <div
+            <Link
               key={l.id}
-              className="flex items-center justify-between p-3 rounded-lg border bg-card"
+              to={`/novo?edit=${l.id}`}
+              onClick={() => onOpenChange(false)}
+              className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 active:bg-accent transition-colors"
             >
               <div>
                 <p className="text-sm font-medium">{l.descricao}</p>
@@ -61,7 +64,7 @@ export default function CategoryGroupDialog({
                 <p className="text-sm font-semibold">{formatCurrency(Number(l.valor_bruto))}</p>
                 <p className="text-xs text-muted-foreground">Líq: {formatCurrency(Number(l.valor_liquido))}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </DialogContent>
