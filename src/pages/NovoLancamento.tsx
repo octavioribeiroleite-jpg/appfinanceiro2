@@ -336,6 +336,28 @@ export default function NovoLancamento() {
         <Button type="submit" className="w-full" disabled={submitting || !form.pessoa_id || !form.categoria_id}>
           {submitting ? 'Salvando...' : editId ? 'Atualizar' : 'Salvar'}
         </Button>
+
+        {editId && (
+          <Button
+            type="button"
+            variant="destructive"
+            className="w-full"
+            onClick={async () => {
+              if (!confirm('Excluir este lançamento? Esta ação não pode ser desfeita.')) return;
+              const { error } = await supabase.from('lancamentos').delete().eq('id', editId);
+              if (error) {
+                toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+              } else {
+                queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
+                queryClient.invalidateQueries({ queryKey: ['lancamentos-ano'] });
+                toast({ title: 'Lançamento excluído!' });
+                navigate('/lancamentos');
+              }
+            }}
+          >
+            Excluir Lançamento
+          </Button>
+        )}
       </form>
     </div>
   );
