@@ -10,7 +10,7 @@ import {
   Settings,
   BarChart3,
   LogOut,
-  DollarSign,
+  Heart,
   Sliders,
   Menu,
   X,
@@ -49,12 +49,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <DollarSign className="h-4 w-4 text-primary-foreground" />
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 px-4 py-3 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2.5">
+          <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+            <Heart className="h-4 w-4 text-primary-foreground fill-primary-foreground" />
           </div>
-          <span className="font-bold text-lg hidden sm:inline">Controle Financeiro</span>
+          <span className="font-bold text-lg text-foreground tracking-tight">Controle Familiar</span>
         </Link>
         <div className="flex items-center gap-1">
           <Button

@@ -223,27 +223,35 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header + month/year selector */}
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold sm:text-2xl">Dashboard</h1>
-        <div className="flex gap-2">
-          <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
-            <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {MESES.map((m, i) => (
-                <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={String(ano)} onValueChange={v => setAno(Number(v))}>
-            <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {[2024, 2025, 2026, 2027].map(a => (
-                <SelectItem key={a} value={String(a)}>{a}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Hero header with verse + big month title (reference style) */}
+      <div className="space-y-2 pt-1">
+        <p className="text-sm italic text-muted-foreground">
+          "Até aqui nos ajudou o Senhor" — 1 Samuel 7:12
+        </p>
+        <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-primary capitalize leading-tight">
+          {MESES[mes - 1]} de {ano}
+        </h1>
+        <p className="text-sm text-muted-foreground">Acompanhamento financeiro mensal</p>
+      </div>
+
+      {/* Month/year selector */}
+      <div className="flex gap-2">
+        <Select value={String(mes)} onValueChange={v => setMes(Number(v))}>
+          <SelectTrigger className="flex-1 bg-card border-border/70 rounded-2xl h-12"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {MESES.map((m, i) => (
+              <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={String(ano)} onValueChange={v => setAno(Number(v))}>
+          <SelectTrigger className="w-24 bg-card border-border/70 rounded-2xl h-12"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {[2024, 2025, 2026, 2027].map(a => (
+              <SelectItem key={a} value={String(a)}>{a}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* 1. Previsão Salarial */}
