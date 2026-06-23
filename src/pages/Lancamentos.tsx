@@ -34,6 +34,7 @@ export default function Lancamentos() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data: pessoas = [] } = usePessoas();
   const { data: categorias = [] } = useCategorias();
 
