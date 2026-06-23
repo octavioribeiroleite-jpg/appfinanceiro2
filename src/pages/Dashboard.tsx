@@ -63,6 +63,25 @@ export default function Dashboard() {
       .reduce((s, l) => s + Number(l.valor_bruto), 0);
   }, [lancamentosMes]);
 
+  const porPessoa = useMemo(() => {
+    const map: Record<string, { id: string; nome: string; previsao: number; recebido: number }> = {};
+    modelos.filter(m => m.tipo_lancamento === 'receita' && m.ativo).forEach(m => {
+      const id = m.pessoa_id;
+      const nome = (m as any).pessoas?.nome || 'Sem pessoa';
+      if (!map[id]) map[id] = { id, nome, previsao: 0, recebido: 0 };
+      map[id].previsao += Number(m.valor_padrao);
+    });
+    lancamentosMes
+      .filter(l => l.tipo_lancamento === 'receita' && l.status === 'recebido')
+      .forEach(l => {
+        const id = l.pessoa_id;
+        const nome = (l as any).pessoas?.nome || 'Sem pessoa';
+        if (!map[id]) map[id] = { id, nome, previsao: 0, recebido: 0 };
+        map[id].recebido += Number(l.valor_bruto);
+      });
+    return Object.values(map).sort((a, b) => b.previsao - a.previsao);
+  }, [modelos, lancamentosMes]);
+
   const recebido = recebidoRecorrente + avulsos;
 
   // Agrupar lançamentos reais do mês por categoria
@@ -228,7 +247,7 @@ export default function Dashboard() {
       </div>
 
       {/* 1. Previsão Salarial */}
-      <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} mes={mes} ano={ano} />
+      <SalaryForecast previsao={previsao} recebidoRecorrente={recebidoRecorrente} avulsos={avulsos} mes={mes} ano={ano} porPessoa={porPessoa} />
 
       {/* 2. Recorrências Pendentes */}
       <RecorrenciasPendentes modelos={modelos} lancamentosMes={lancamentosMes} mes={mes} ano={ano} />
