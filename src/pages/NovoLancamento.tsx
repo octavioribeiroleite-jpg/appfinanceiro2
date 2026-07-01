@@ -77,28 +77,35 @@ export default function NovoLancamento() {
 
     if (edit) {
       setEditId(edit);
-      supabase.from('lancamentos').select('*').eq('id', edit).single().then(({ data }) => {
-        if (data) {
-          setForm({
-            pessoa_id: data.pessoa_id,
-            categoria_id: data.categoria_id,
-            descricao: data.descricao,
-            tipo_lancamento: data.tipo_lancamento as 'receita' | 'despesa',
-            valor_bruto: Number(data.valor_bruto),
-            percentual_dizimo: Number(data.percentual_dizimo),
-            percentual_imposto: Number(data.percentual_imposto),
-            percentual_gasolina: Number(data.percentual_gasolina),
-            aplicar_dizimo: data.aplicar_dizimo,
-            aplicar_imposto: data.aplicar_imposto,
-            aplicar_gasolina: data.aplicar_gasolina,
-            data_prevista: data.data_prevista || '',
-            data_real: data.data_real || '',
-            status: data.status,
-            observacoes: data.observacoes || '',
-          });
+      supabase.from('lancamentos').select('*').eq('id', edit).maybeSingle().then(({ data, error }) => {
+        if (error) {
+          toast({ title: 'Erro ao carregar', description: error.message, variant: 'destructive' });
+          return;
         }
+        if (!data) {
+          toast({ title: 'Lançamento não encontrado', variant: 'destructive' });
+          return;
+        }
+        setForm({
+          pessoa_id: data.pessoa_id ?? '',
+          categoria_id: data.categoria_id ?? '',
+          descricao: data.descricao ?? '',
+          tipo_lancamento: data.tipo_lancamento as 'receita' | 'despesa',
+          valor_bruto: Number(data.valor_bruto),
+          percentual_dizimo: Number(data.percentual_dizimo),
+          percentual_imposto: Number(data.percentual_imposto),
+          percentual_gasolina: Number(data.percentual_gasolina),
+          aplicar_dizimo: data.aplicar_dizimo,
+          aplicar_imposto: data.aplicar_imposto,
+          aplicar_gasolina: data.aplicar_gasolina,
+          data_prevista: data.data_prevista || '',
+          data_real: data.data_real || '',
+          status: data.status,
+          observacoes: data.observacoes || '',
+        });
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   // Auto-fill percentages from regras when category changes
