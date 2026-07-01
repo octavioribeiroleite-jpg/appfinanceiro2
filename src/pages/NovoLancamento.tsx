@@ -174,16 +174,28 @@ export default function NovoLancamento() {
       observacoes: form.observacoes || null,
     };
 
+    if (!form.pessoa_id || !form.categoria_id) {
+      setSubmitting(false);
+      toast({ title: 'Preencha Pessoa e Categoria', variant: 'destructive' });
+      return;
+    }
+
     let error;
+    let affected = 0;
     if (editId) {
-      ({ error } = await supabase.from('lancamentos').update(payload).eq('id', editId));
+      const res = await supabase.from('lancamentos').update(payload).eq('id', editId).select('id');
+      error = res.error;
+      affected = res.data?.length ?? 0;
     } else {
       ({ error } = await supabase.from('lancamentos').insert(payload));
+      affected = error ? 0 : 1;
     }
 
     setSubmitting(false);
     if (error) {
-      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+    } else if (editId && affected === 0) {
+      toast({ title: 'Nada foi atualizado', description: 'Verifique se o lançamento ainda existe.', variant: 'destructive' });
     } else {
       queryClient.invalidateQueries({ queryKey: ['lancamentos'] });
       queryClient.invalidateQueries({ queryKey: ['lancamentos-ano'] });
