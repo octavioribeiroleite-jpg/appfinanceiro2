@@ -352,7 +352,7 @@ export default function NovoLancamento() {
           <Textarea value={form.observacoes} onChange={e => update('observacoes', e.target.value)} />
         </div>
 
-        <Button type="submit" className="w-full" disabled={submitting || !form.pessoa_id || !form.categoria_id}>
+        <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? 'Salvando...' : editId ? 'Atualizar' : 'Salvar'}
         </Button>
 
